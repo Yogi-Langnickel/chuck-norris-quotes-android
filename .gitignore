@@ -1,0 +1,42 @@
+# Android / Gradle
+.gradle/
+.kotlin/
+build/
+app/build/
+
+# Local machine config
+local.properties
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+
+# Outputs
+*.apk
+*.aab
+*.apks
+*.idsig
+mapping.txt
+
+# Signing / secrets
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+*.p12
+*.pem
+service-account*.json
+play-account*.json
+.env*
+
+# Diagnostics
+*.log
+captures/
+*.hprof
+
+# Local agent memory
+AGENTS.md
+GEMINI.MD
+docs/agent-memory.md
+docs/memory/

@@ -1,0 +1,10 @@
+Welcome to the Chuck Norris Quotes app! This application fetches random Chuck Norris quotes from the Chuck Norris API and displays them in a user-friendly interface.
+
+With a clean and modern design, the app utilizes Jetpack Compose for a responsive UI and follows the MVVM architecture for maintainability and scalability.
+
+Key Features:
+- Fetch random Chuck Norris quotes with a simple tap.
+- Beautifully designed UI using Jetpack Compose.
+- Built with Kotlin for a seamless Android experience.
+
+Join us in celebrating the legendary Chuck Norris with this fun and entertaining app!
