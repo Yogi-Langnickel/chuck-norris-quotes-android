@@ -100,6 +100,47 @@ class ApiServiceTest {
         }
     }
 
+    @Test
+    fun getRandomDogFact_returnsApiFact() = runBlocking {
+        val service = ApiService(
+            testClient(
+                """
+                    {
+                      "data": [
+                        {
+                          "attributes": {
+                            "body": "Dogs can understand human pointing gestures."
+                          }
+                        }
+                      ]
+                    }
+                """.trimIndent()
+            )
+        )
+
+        val fact = service.getRandomDogFact()
+
+        assertEquals("Dogs can understand human pointing gestures.", fact)
+    }
+
+    @Test
+    fun getRandomDogFact_throwsWhenApiFails() {
+        val service = ApiService(testClient(status = HttpStatusCode.InternalServerError))
+
+        assertThrows(FactServiceException::class.java) {
+            runBlocking { service.getRandomDogFact() }
+        }
+    }
+
+    @Test
+    fun getRandomDogFact_rethrowsCancellation() {
+        val service = ApiService(cancelledClient())
+
+        assertThrows(CancellationException::class.java) {
+            runBlocking { service.getRandomDogFact() }
+        }
+    }
+
     private fun testClient(
         body: String = "{}",
         status: HttpStatusCode = HttpStatusCode.OK

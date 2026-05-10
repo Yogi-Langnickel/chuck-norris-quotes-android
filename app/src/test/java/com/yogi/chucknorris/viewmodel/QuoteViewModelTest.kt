@@ -5,10 +5,13 @@ import androidx.lifecycle.Observer
 import com.yogi.chucknorris.data.local.BattleScoreStore
 import com.yogi.chucknorris.data.model.Quote
 import com.yogi.chucknorris.data.repository.QuoteDataSource
+import com.yogi.chucknorris.domain.BattleContender
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
 import com.yogi.chucknorris.domain.BattleWinner
+import com.yogi.chucknorris.domain.FactSource
+import com.yogi.chucknorris.domain.QuotePowerProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CompletableDeferred
@@ -109,6 +112,43 @@ class QuoteViewModelTest {
 
             assertEquals(
                 listOf(QuoteUiState.Loading, QuoteUiState.Error(QuoteRequest.CAT_FACT)),
+                states
+            )
+        }
+    }
+
+    @Test
+    fun fetchRandomDogFact_emitsLoadingThenSuccess() = runTest {
+        val dogFact = Quote("dog-1", "Dogs can understand human pointing gestures.", "Dog Fact")
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(dogFactResult = Result.success(dogFact)),
+            FakeBattleScoreStore()
+        )
+
+        viewModel.recordQuoteStates { states ->
+            viewModel.fetchRandomDogFact()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(QuoteUiState.Loading, QuoteUiState.Success(dogFact)),
+                states
+            )
+        }
+    }
+
+    @Test
+    fun fetchRandomDogFact_emitsLoadingThenErrorWhenApiFails() = runTest {
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(dogFactResult = Result.failure(RuntimeException("Dog failed"))),
+            FakeBattleScoreStore()
+        )
+
+        viewModel.recordQuoteStates { states ->
+            viewModel.fetchRandomDogFact()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(QuoteUiState.Loading, QuoteUiState.Error(QuoteRequest.DOG_FACT)),
                 states
             )
         }
@@ -256,6 +296,9 @@ class QuoteViewModelTest {
         var catFactResult: Result<Quote> = Result.success(
             Quote("cat-default", "Cats can rotate their ears.", "Cat Fact")
         ),
+        var dogFactResult: Result<Quote> = Result.success(
+            Quote("dog-default", "Dogs have a strong sense of smell.", "Dog Fact")
+        ),
         var battleRoundResult: Result<BattleRound> = Result.success(
             BattleRound.from(
                 Quote("chuck-battle", "Chuck Norris can divide by zero.", "Chuck Norris"),
@@ -265,7 +308,17 @@ class QuoteViewModelTest {
     ) : QuoteDataSource {
         override suspend fun getRandomQuote(): Quote = quoteResult.getOrThrow()
         override suspend fun getRandomCatFact(): Quote = catFactResult.getOrThrow()
+        override suspend fun getRandomDogFact(): Quote = dogFactResult.getOrThrow()
         override suspend fun getBattleRound(): BattleRound = battleRoundResult.getOrThrow()
+        override suspend fun getBattleChallenger(excludedSources: Set<FactSource>): BattleContender {
+            val source = FactSource.entries.first { it !in excludedSources }
+            val quote = when (source) {
+                FactSource.CHUCK -> quoteResult.getOrThrow()
+                FactSource.CAT -> catFactResult.getOrThrow()
+                FactSource.DOG -> dogFactResult.getOrThrow()
+            }
+            return BattleContender(source, quote, QuotePowerProfile.from(quote.value))
+        }
     }
 
     private class SuspendedQuoteDataSource(
@@ -274,6 +327,9 @@ class QuoteViewModelTest {
         ),
         private val catFact: CompletableDeferred<Quote> = CompletableDeferred(
             Quote("cat-default", "Cats can rotate their ears.", "Cat Fact")
+        ),
+        private val dogFact: CompletableDeferred<Quote> = CompletableDeferred(
+            Quote("dog-default", "Dogs have a strong sense of smell.", "Dog Fact")
         ),
         private val battleRound: CompletableDeferred<BattleRound> = CompletableDeferred(
             BattleRound.from(
@@ -284,7 +340,17 @@ class QuoteViewModelTest {
     ) : QuoteDataSource {
         override suspend fun getRandomQuote(): Quote = quote.await()
         override suspend fun getRandomCatFact(): Quote = catFact.await()
+        override suspend fun getRandomDogFact(): Quote = dogFact.await()
         override suspend fun getBattleRound(): BattleRound = battleRound.await()
+        override suspend fun getBattleChallenger(excludedSources: Set<FactSource>): BattleContender {
+            val source = FactSource.entries.first { it !in excludedSources }
+            val quote = when (source) {
+                FactSource.CHUCK -> quote.await()
+                FactSource.CAT -> catFact.await()
+                FactSource.DOG -> dogFact.await()
+            }
+            return BattleContender(source, quote, QuotePowerProfile.from(quote.value))
+        }
     }
 
     private class FakeBattleScoreStore : BattleScoreStore {

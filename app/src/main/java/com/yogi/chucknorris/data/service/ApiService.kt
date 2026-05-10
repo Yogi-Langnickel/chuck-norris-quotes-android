@@ -9,7 +9,8 @@ import kotlinx.coroutines.CancellationException
 class ApiService(
     private val client: HttpClient,
     private val chuckRateLimiter: StreamRateLimiter = StreamRateLimiter(),
-    private val catRateLimiter: StreamRateLimiter = StreamRateLimiter()
+    private val catRateLimiter: StreamRateLimiter = StreamRateLimiter(),
+    private val dogRateLimiter: StreamRateLimiter = StreamRateLimiter()
 ) : FactService {
     private var nextCatProvider = CatFactProvider.CATFACT_NINJA
 
@@ -47,6 +48,30 @@ class ApiService(
             throw e
         } catch (e: Exception) {
             throw FactServiceException("Cat Fact API request failed.", e)
+        }
+    }
+
+    override suspend fun getRandomDogFact(): String {
+        return try {
+            dogRateLimiter.checkRequestAllowed("Dog fact")
+            val response = client.get("https://dogapi.dog/api/v2/facts?limit=1")
+            if (response.status == HttpStatusCode.OK) {
+                val dogFact: DogApiResponse = response.body()
+                dogFact.data
+                    .firstOrNull()
+                    ?.attributes
+                    ?.body
+                    ?.takeIf { it.isNotBlank() }
+                    ?: throw FactServiceException("Dog API returned an empty fact.")
+            } else {
+                throw FactServiceException("Dog API failed with status ${response.status.value}.")
+            }
+        } catch (e: FactServiceException) {
+            throw e
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            throw FactServiceException("Dog API request failed.", e)
         }
     }
 
@@ -105,4 +130,16 @@ data class CatFactResponse(
 
 data class MeowFactsResponse(
     val data: List<String> = emptyList()
+)
+
+data class DogApiResponse(
+    val data: List<DogFactResource> = emptyList()
+)
+
+data class DogFactResource(
+    val attributes: DogFactAttributes? = null
+)
+
+data class DogFactAttributes(
+    val body: String? = null
 )

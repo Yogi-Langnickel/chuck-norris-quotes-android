@@ -1,13 +1,13 @@
 # Chuck Norris Quotes Android
 
-A small Kotlin Android app that fetches random Chuck Norris quotes and cat facts from public APIs, then displays them with a Jetpack Compose interface.
+A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them with a Jetpack Compose interface.
 
 ## Install On Android
 
 The easiest way to install the app on your own phone is through the latest GitHub release:
 
 1. Open `https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest` on your Android phone.
-2. Download the `chuck-norris-quotes-android-1.2.2-debug.apk` asset.
+2. Download the `chuck-norris-quotes-android-1.3.0-debug.apk` asset.
 3. If Android asks, allow your browser or file manager to install unknown apps.
 4. Open the downloaded APK and confirm installation.
 
@@ -24,7 +24,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 To install a downloaded release asset:
 
 ```bash
-adb install -r chuck-norris-quotes-android-1.2.2-debug.apk
+adb install -r chuck-norris-quotes-android-1.3.0-debug.apk
 ```
 
 ## Build Locally
@@ -52,10 +52,11 @@ app/build/outputs/apk/debug/app-debug.apk
 
 - Fetches random Chuck Norris quotes from `api.chucknorris.io`.
 - Rotates random cat facts between `catfact.ninja` and MeowFacts.
-- Runs a battle-first Chuck vs Cat mode where the user swipes away the loser, the winner scores, and a new challenger slides in from the opposite side.
+- Fetches random dog facts from Dog API.
+- Runs a battle-first mode where the user swipes away the loser, the winner scores, and a new challenger from another fact stream slides in.
 - Tracks personal daily, weekly, and monthly winners locally.
-- Separates Battle Mode, Chuck Facts, and Cat Facts into dedicated tabs.
-- Limits Chuck and Cat refresh streams to 10 requests per minute each.
+- Separates Battle Mode, Chuck Facts, Cat Facts, and Dog Facts into dedicated tabs.
+- Limits Chuck, Cat, and Dog refresh streams to 10 requests per minute each.
 - Links to the latest GitHub release from inside the app.
 - Shows a local-only fact power profile for the current quote or fact.
 - Supports copying and sharing the current quote or fact.
@@ -65,12 +66,12 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Privacy
 
-The app requests internet access so it can fetch quotes and cat facts from public third-party APIs. It does not require login, payments, contacts, location, or local account access.
+The app requests internet access so it can fetch quotes, cat facts, and dog facts from public third-party APIs. It does not require login, payments, contacts, location, or local account access.
 
 ## Current Release
 
-- Version: `1.2.2`
-- APK SHA-256: `b83f35cf627cad97d55ff45068f54b3740225dbeba85f26f8f75deb4038e07ee`
+- Version: `1.3.0`
+- APK SHA-256: `dbb3a63f607be3debab8a98fc9c321bb7fbb7925aa9264096c1620981fd631a7`
 
 ## License
 
