@@ -91,14 +91,15 @@ fun MainScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            val updateIntent = Intent(Intent.ACTION_VIEW, Uri.parse(latestReleaseUrl))
-                            try {
-                                context.startActivity(updateIntent)
-                            } catch (e: ActivityNotFoundException) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(updateUnavailableMessage)
+                            openLatestRelease(
+                                context = context,
+                                latestReleaseUrl = latestReleaseUrl,
+                                onUnavailable = {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(updateUnavailableMessage)
+                                    }
                                 }
-                            }
+                            )
                         }
                     ) {
                         Icon(
@@ -147,6 +148,29 @@ fun MainScreen(
                             }
                         )
                     }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        openLatestRelease(
+                            context = context,
+                            latestReleaseUrl = latestReleaseUrl,
+                            onUnavailable = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(updateUnavailableMessage)
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.OpenInNew,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.update_app))
                 }
 
                 when (selectedTab) {
@@ -321,6 +345,19 @@ private fun shareQuote(
         context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
     } catch (e: ActivityNotFoundException) {
         onShareUnavailable()
+    }
+}
+
+private fun openLatestRelease(
+    context: android.content.Context,
+    latestReleaseUrl: String,
+    onUnavailable: () -> Unit
+) {
+    val updateIntent = Intent(Intent.ACTION_VIEW, Uri.parse(latestReleaseUrl))
+    try {
+        context.startActivity(updateIntent)
+    } catch (e: ActivityNotFoundException) {
+        onUnavailable()
     }
 }
 

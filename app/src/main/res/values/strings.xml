@@ -11,6 +11,7 @@
     <string name="share_chooser_title">Share quote</string>
     <string name="update_unavailable">No browser is available to open the latest release.</string>
     <string name="open_latest_release">Open latest release</string>
+    <string name="update_app">Update app</string>
     <string name="latest_release_url">https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest</string>
     <string name="close_app">Close app</string>
     <string name="quote_power_badge">%1$s / %2$s</string>
