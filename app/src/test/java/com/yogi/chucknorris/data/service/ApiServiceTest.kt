@@ -58,6 +58,31 @@ class ApiServiceTest {
     }
 
     @Test
+    fun getRandomCatFact_rotatesBetweenCatFactNinjaAndMeowFacts() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val service = ApiService(
+            testClient { requestUrl ->
+                requestedUrls += requestUrl
+                when (requestUrl) {
+                    "https://catfact.ninja/fact" -> """{"fact":"Cats have excellent night vision.","length":33}"""
+                    "https://meowfacts.herokuapp.com/" -> """{"data":["Cats can rotate their ears."]}"""
+                    else -> "{}"
+                }
+            }
+        )
+
+        val firstFact = service.getRandomCatFact()
+        val secondFact = service.getRandomCatFact()
+
+        assertEquals("Cats have excellent night vision.", firstFact)
+        assertEquals("Cats can rotate their ears.", secondFact)
+        assertEquals(
+            listOf("https://catfact.ninja/fact", "https://meowfacts.herokuapp.com/"),
+            requestedUrls
+        )
+    }
+
+    @Test
     fun getRandomCatFact_throwsWhenApiFails() {
         val service = ApiService(testClient(status = HttpStatusCode.InternalServerError))
 
@@ -79,11 +104,18 @@ class ApiServiceTest {
         body: String = "{}",
         status: HttpStatusCode = HttpStatusCode.OK
     ): HttpClient {
+        return testClient(status = status) { body }
+    }
+
+    private fun testClient(
+        status: HttpStatusCode = HttpStatusCode.OK,
+        bodyForUrl: (String) -> String
+    ): HttpClient {
         return HttpClient(MockEngine) {
             engine {
-                addHandler {
+                addHandler { request ->
                     respond(
-                        content = body,
+                        content = bodyForUrl(request.url.toString()),
                         status = status,
                         headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     )
