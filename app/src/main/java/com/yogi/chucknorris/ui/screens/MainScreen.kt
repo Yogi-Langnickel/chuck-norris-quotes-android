@@ -2,12 +2,14 @@ package com.yogi.chucknorris.ui.screens
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -31,6 +33,11 @@ import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleScore
 import com.yogi.chucknorris.ui.components.BattleArena
 
+private enum class AppTab {
+    BATTLE,
+    CHUCK,
+    CAT
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,18 +51,24 @@ fun MainScreen(
     val selectedPeriod by quoteViewModel.selectedPeriod.observeAsState(BattlePeriod.DAILY)
     val battleScores by quoteViewModel.battleScores.observeAsState(emptyMap<BattlePeriod, BattleScore>())
     val isBattleLoading by quoteViewModel.isBattleLoading.observeAsState(false)
-    val currentQuote = (quoteUiState as? QuoteUiState.Success)?.quote
     val isQuoteLoading = quoteUiState is QuoteUiState.Loading
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var selectedTab by remember { mutableStateOf(AppTab.BATTLE) }
     val copiedMessage = stringResource(R.string.quote_copied)
     val shareUnavailableMessage = stringResource(R.string.share_unavailable)
     val shareChooserTitle = stringResource(R.string.share_chooser_title)
+    val updateUnavailableMessage = stringResource(R.string.update_unavailable)
+    val latestReleaseUrl = stringResource(R.string.latest_release_url)
 
-    LaunchedEffect(Unit) {
-        quoteViewModel.fetchBattleRound()
+    LaunchedEffect(selectedTab) {
+        when (selectedTab) {
+            AppTab.BATTLE -> if (battleRound == null) quoteViewModel.fetchBattleRound()
+            AppTab.CHUCK -> quoteViewModel.fetchRandomQuote()
+            AppTab.CAT -> quoteViewModel.fetchRandomCatFact()
+        }
     }
 
     Scaffold(
@@ -74,6 +87,23 @@ fun MainScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            val updateIntent = Intent(Intent.ACTION_VIEW, Uri.parse(latestReleaseUrl))
+                            try {
+                                context.startActivity(updateIntent)
+                            } catch (e: ActivityNotFoundException) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(updateUnavailableMessage)
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.OpenInNew,
+                            contentDescription = stringResource(R.string.open_latest_release)
+                        )
+                    }
                     IconButton(onClick = { onCloseApp() }) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -98,108 +128,173 @@ fun MainScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 28.dp)
             ) {
-                BattleArena(
-                    battleRound = battleRound,
-                    selectedWinner = selectedWinner,
-                    selectedPeriod = selectedPeriod,
-                    battleScores = battleScores,
-                    isLoading = isBattleLoading || isQuoteLoading,
-                    onPeriodSelected = quoteViewModel::selectPeriod,
-                    onWinnerSelected = quoteViewModel::chooseBattleWinner,
-                    onBattleClick = quoteViewModel::fetchBattleRound
-                )
-                when (val state = quoteUiState) {
-                    QuoteUiState.Loading -> CircularProgressIndicator()
-                    is QuoteUiState.Success -> QuoteCard(quote = state.quote)
-                    is QuoteUiState.Error -> QuoteErrorCard(
-                        request = state.request,
-                        onRetry = { quoteViewModel.retryQuoteLoad(state.request) }
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { quoteViewModel.fetchRandomQuote() },
-                            enabled = !isQuoteLoading,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.get_new_quote))
-                        }
-                        Button(
-                            onClick = { quoteViewModel.fetchRandomCatFact() },
-                            enabled = !isQuoteLoading,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary,
-                                contentColor = MaterialTheme.colorScheme.onSecondary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.get_cat_fact))
-                        }
-                    }
-                    FilledTonalIconButton(
-                        enabled = currentQuote != null,
-                        onClick = {
-                            currentQuote?.let { quoteData ->
-                                clipboardManager.setText(AnnotatedString(quoteData.value))
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(copiedMessage)
-                                }
+                TabRow(selectedTabIndex = selectedTab.ordinal) {
+                    AppTab.entries.forEach { tab ->
+                        Tab(
+                            selected = selectedTab == tab,
+                            onClick = { selectedTab = tab },
+                            text = {
+                                Text(
+                                    when (tab) {
+                                        AppTab.BATTLE -> stringResource(R.string.tab_battle_mode)
+                                        AppTab.CHUCK -> stringResource(R.string.tab_chuck_facts)
+                                        AppTab.CAT -> stringResource(R.string.tab_cat_facts)
+                                    }
+                                )
                             }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = stringResource(R.string.copy_quote)
                         )
                     }
-                    FilledTonalIconButton(
-                        enabled = currentQuote != null,
-                        onClick = {
-                            currentQuote?.let { quoteData ->
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, quoteData.value)
-                                }
-                                try {
-                                    context.startActivity(
-                                        Intent.createChooser(shareIntent, shareChooserTitle)
-                                    )
-                                } catch (e: ActivityNotFoundException) {
+                }
+
+                when (selectedTab) {
+                    AppTab.BATTLE -> {
+                        BattleArena(
+                            battleRound = battleRound,
+                            selectedWinner = selectedWinner,
+                            selectedPeriod = selectedPeriod,
+                            battleScores = battleScores,
+                            isLoading = isBattleLoading,
+                            onPeriodSelected = quoteViewModel::selectPeriod,
+                            onWinnerSelected = quoteViewModel::chooseBattleWinner,
+                            onLoserSwipedAway = quoteViewModel::continueBattleWithSelectedWinner,
+                            onRefreshBoth = quoteViewModel::fetchBattleRound
+                        )
+                        if (isBattleLoading && battleRound == null) {
+                            CircularProgressIndicator()
+                        }
+                        if (quoteUiState is QuoteUiState.Error &&
+                            (quoteUiState as QuoteUiState.Error).request == QuoteRequest.BATTLE_ROUND
+                        ) {
+                            QuoteErrorCard(
+                                request = QuoteRequest.BATTLE_ROUND,
+                                onRetry = quoteViewModel::fetchBattleRound
+                            )
+                        }
+                    }
+                    AppTab.CHUCK -> FactTabContent(
+                        quoteUiState = quoteUiState,
+                        expectedSourceLabel = "Chuck Norris",
+                        isQuoteLoading = isQuoteLoading,
+                        onRefresh = quoteViewModel::fetchRandomQuote,
+                        onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.CHUCK_QUOTE) },
+                        onCopy = { quoteData ->
+                            clipboardManager.setText(AnnotatedString(quoteData.value))
+                            scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
+                        },
+                        onShare = { quoteData ->
+                            shareQuote(
+                                quote = quoteData.value,
+                                chooserTitle = shareChooserTitle,
+                                context = context,
+                                onShareUnavailable = {
                                     scope.launch {
                                         snackbarHostState.showSnackbar(shareUnavailableMessage)
                                     }
                                 }
-                            }
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = stringResource(R.string.share_quote)
-                        )
-                    }
+                    )
+                    AppTab.CAT -> FactTabContent(
+                        quoteUiState = quoteUiState,
+                        expectedSourceLabel = "Cat Fact",
+                        isQuoteLoading = isQuoteLoading,
+                        onRefresh = quoteViewModel::fetchRandomCatFact,
+                        onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.CAT_FACT) },
+                        onCopy = { quoteData ->
+                            clipboardManager.setText(AnnotatedString(quoteData.value))
+                            scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
+                        },
+                        onShare = { quoteData ->
+                            shareQuote(
+                                quote = quoteData.value,
+                                chooserTitle = shareChooserTitle,
+                                context = context,
+                                onShareUnavailable = {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(shareUnavailableMessage)
+                                    }
+                                }
+                            )
+                        }
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FactTabContent(
+    quoteUiState: QuoteUiState,
+    expectedSourceLabel: String,
+    isQuoteLoading: Boolean,
+    onRefresh: () -> Unit,
+    onRetry: () -> Unit,
+    onCopy: (com.yogi.chucknorris.data.model.Quote) -> Unit,
+    onShare: (com.yogi.chucknorris.data.model.Quote) -> Unit
+) {
+    val currentQuote = (quoteUiState as? QuoteUiState.Success)
+        ?.quote
+        ?.takeIf { it.sourceLabel == expectedSourceLabel }
+
+    when {
+        isQuoteLoading || quoteUiState is QuoteUiState.Loading || currentQuote == null && quoteUiState !is QuoteUiState.Error -> {
+            CircularProgressIndicator()
+        }
+        quoteUiState is QuoteUiState.Error -> {
+            QuoteErrorCard(request = quoteUiState.request, onRetry = onRetry)
+        }
+        currentQuote != null -> {
+            QuoteCard(quote = currentQuote)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onRefresh,
+                    enabled = !isQuoteLoading,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.refresh_fact))
+                }
+                FilledTonalIconButton(onClick = { onCopy(currentQuote) }) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = stringResource(R.string.copy_quote)
+                    )
+                }
+                FilledTonalIconButton(onClick = { onShare(currentQuote) }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.share_quote)
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun shareQuote(
+    quote: String,
+    chooserTitle: String,
+    context: android.content.Context,
+    onShareUnavailable: () -> Unit
+) {
+    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, quote)
+    }
+    try {
+        context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
+    } catch (e: ActivityNotFoundException) {
+        onShareUnavailable()
     }
 }
 

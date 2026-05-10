@@ -5,6 +5,9 @@ Track small follow-ups that should not block the current quote and cat fact feat
 ## Current Branch Follow-Ups
 
 - [x] Make Quote Battle scoring user-selected: a loaded round does not update scores until the user chooses Chuck or Cat, and each round records only once.
+- [x] Keep the battle winner in place, swipe the loser away, and refresh only the losing side as the next challenger.
+- [x] Split the app into Battle Mode, Chuck Facts, and Cat Facts tabs.
+- [x] Add per-stream quote/fact rate limiting and a latest-release update entry point.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.
 - [x] Surface Chuck Norris API and Cat Fact API failures as clear retryable error UI instead of treating fallback text as content.
 - [x] Disable or guard copy/share actions while no successful quote or fact is available.
@@ -21,6 +24,6 @@ Track small follow-ups that should not block the current quote and cat fact feat
 ## Future Fun Features
 
 - [ ] Develop Quote Battle further as a possible standalone mode/app with a chaos champion streak and richer tournament framing.
-- [ ] Add a richer animated battle presentation for quote contests beyond the current animated contender cards.
+- [ ] Add richer animation polish beyond the current winner celebration and loser swipe-away.
 - [ ] Add a share-card generator that renders the current quote/fact as a themed image card, with themes such as classified file, retro action poster, and cat fact interruption.
 - [ ] Add a lightweight daily challenge around one quote/fact, such as rating the power level, guessing the category, or deciding whether a cat survives the fact.

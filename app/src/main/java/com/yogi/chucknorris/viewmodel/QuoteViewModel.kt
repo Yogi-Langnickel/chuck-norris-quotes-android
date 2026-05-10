@@ -128,6 +128,46 @@ class QuoteViewModel(
         _battleScores.value = battleScoreStore.recordBattle(winner)
     }
 
+    fun continueBattleWithSelectedWinner() {
+        val currentRound = _battleRound.value ?: return
+        val selectedWinner = _selectedBattleWinner.value ?: return
+        if (selectedWinner == BattleWinner.DRAW) return
+
+        activeQuoteRequest?.cancel()
+        activeQuoteRequest = viewModelScope.launch {
+            _isBattleLoading.value = true
+            try {
+                val nextRound = when (selectedWinner) {
+                    BattleWinner.CHUCK -> BattleRound.from(
+                        chuckQuote = currentRound.chuck.quote,
+                        catFact = quoteRepository.getRandomCatFact()
+                    )
+                    BattleWinner.CAT -> BattleRound.from(
+                        chuckQuote = quoteRepository.getRandomQuote(),
+                        catFact = currentRound.cat.quote
+                    )
+                    BattleWinner.DRAW -> currentRound
+                }
+                _battleRound.value = nextRound
+                _selectedBattleWinner.value = null
+                recordedBattleRound = null
+                _quoteUiState.value = QuoteUiState.Success(
+                    when (selectedWinner) {
+                        BattleWinner.CHUCK -> nextRound.cat.quote
+                        BattleWinner.CAT -> nextRound.chuck.quote
+                        BattleWinner.DRAW -> nextRound.chuck.quote
+                    }
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.BATTLE_ROUND)
+            } finally {
+                _isBattleLoading.value = false
+            }
+        }
+    }
+
     fun retryQuoteLoad(request: QuoteRequest) {
         when (request) {
             QuoteRequest.CHUCK_QUOTE -> fetchRandomQuote()

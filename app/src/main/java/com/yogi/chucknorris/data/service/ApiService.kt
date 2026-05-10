@@ -6,9 +6,14 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 
-class ApiService(private val client: HttpClient) : FactService {
+class ApiService(
+    private val client: HttpClient,
+    private val chuckRateLimiter: StreamRateLimiter = StreamRateLimiter(),
+    private val catRateLimiter: StreamRateLimiter = StreamRateLimiter()
+) : FactService {
     override suspend fun getRandomJoke(): String {
         return try {
+            chuckRateLimiter.checkRequestAllowed("Chuck Norris")
             val response = client.get("https://api.chucknorris.io/jokes/random")
             if (response.status == HttpStatusCode.OK) {
                 val joke: JokeResponse = response.body()
@@ -29,6 +34,7 @@ class ApiService(private val client: HttpClient) : FactService {
 
     override suspend fun getRandomCatFact(): String {
         return try {
+            catRateLimiter.checkRequestAllowed("Cat fact")
             val response = client.get("https://catfact.ninja/fact")
             if (response.status == HttpStatusCode.OK) {
                 val catFact: CatFactResponse = response.body()
