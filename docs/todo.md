@@ -15,6 +15,7 @@ Track small follow-ups that should not block the current quote and cat fact feat
 - [x] Add a Dog Facts tab and include dog facts as an eligible battle challenger stream.
 - [x] Refresh battle challengers from a random non-winner stream with fallback when an eligible API fails.
 - [x] Smooth battle swipe gestures by preserving accepted drag offset into the loser exit animation and spring-settling rejected swipes.
+- [x] Remove battle card tilt/rotation so accepted swipes slide out cleanly without a brief flip.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.
 - [x] Surface Chuck Norris API and Cat Fact API failures as clear retryable error UI instead of treating fallback text as content.
 - [x] Disable or guard copy/share actions while no successful quote or fact is available.
