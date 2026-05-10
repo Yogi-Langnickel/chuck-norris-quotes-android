@@ -4,7 +4,7 @@ With a clean and modern design, the app utilizes Jetpack Compose for a responsiv
 
 Key Features:
 - Fetch random Chuck Norris quotes with a simple tap.
-- Fetch random cat facts with a simple tap.
+- Fetch random cat facts from rotating public sources.
 - Start a Chuck vs Cat battle, swipe away the loser, and track daily, weekly, and monthly local scores.
 - Switch between dedicated Battle Mode, Chuck Facts, and Cat Facts tabs.
 - Open the latest GitHub release from inside the app for easier manual updates.

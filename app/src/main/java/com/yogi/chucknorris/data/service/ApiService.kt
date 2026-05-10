@@ -11,6 +11,8 @@ class ApiService(
     private val chuckRateLimiter: StreamRateLimiter = StreamRateLimiter(),
     private val catRateLimiter: StreamRateLimiter = StreamRateLimiter()
 ) : FactService {
+    private var nextCatProvider = CatFactProvider.CATFACT_NINJA
+
     override suspend fun getRandomJoke(): String {
         return try {
             chuckRateLimiter.checkRequestAllowed("Chuck Norris")
@@ -35,14 +37,9 @@ class ApiService(
     override suspend fun getRandomCatFact(): String {
         return try {
             catRateLimiter.checkRequestAllowed("Cat fact")
-            val response = client.get("https://catfact.ninja/fact")
-            if (response.status == HttpStatusCode.OK) {
-                val catFact: CatFactResponse = response.body()
-                catFact.fact.ifBlank {
-                    throw FactServiceException("Cat Fact API returned an empty fact.")
-                }
-            } else {
-                throw FactServiceException("Cat Fact API failed with status ${response.status.value}.")
+            when (nextCatFactProvider()) {
+                CatFactProvider.CATFACT_NINJA -> getCatFactNinjaFact()
+                CatFactProvider.MEOWFACTS -> getMeowFactsFact()
             }
         } catch (e: FactServiceException) {
             throw e
@@ -51,6 +48,44 @@ class ApiService(
         } catch (e: Exception) {
             throw FactServiceException("Cat Fact API request failed.", e)
         }
+    }
+
+    private suspend fun getCatFactNinjaFact(): String {
+        val response = client.get("https://catfact.ninja/fact")
+        if (response.status == HttpStatusCode.OK) {
+            val catFact: CatFactResponse = response.body()
+            return catFact.fact.ifBlank {
+                throw FactServiceException("Cat Fact Ninja returned an empty fact.")
+            }
+        } else {
+            throw FactServiceException("Cat Fact Ninja failed with status ${response.status.value}.")
+        }
+    }
+
+    private suspend fun getMeowFactsFact(): String {
+        val response = client.get("https://meowfacts.herokuapp.com/")
+        if (response.status == HttpStatusCode.OK) {
+            val catFact: MeowFactsResponse = response.body()
+            return catFact.data.firstOrNull { it.isNotBlank() }
+                ?: throw FactServiceException("MeowFacts returned an empty fact.")
+        } else {
+            throw FactServiceException("MeowFacts failed with status ${response.status.value}.")
+        }
+    }
+
+    @Synchronized
+    private fun nextCatFactProvider(): CatFactProvider {
+        return nextCatProvider.also { current ->
+            nextCatProvider = when (current) {
+                CatFactProvider.CATFACT_NINJA -> CatFactProvider.MEOWFACTS
+                CatFactProvider.MEOWFACTS -> CatFactProvider.CATFACT_NINJA
+            }
+        }
+    }
+
+    private enum class CatFactProvider {
+        CATFACT_NINJA,
+        MEOWFACTS
     }
 }
 
@@ -66,4 +101,8 @@ data class JokeResponse(
 data class CatFactResponse(
     val fact: String,
     val length: Int? = null
+)
+
+data class MeowFactsResponse(
+    val data: List<String> = emptyList()
 )

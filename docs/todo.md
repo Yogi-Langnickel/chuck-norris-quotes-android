@@ -9,6 +9,9 @@ Track small follow-ups that should not block the current quote and cat fact feat
 - [x] Replace battle select buttons with swipe-away selection and bring the refreshed challenger in from the opposite side.
 - [x] Split the app into Battle Mode, Chuck Facts, and Cat Facts tabs.
 - [x] Add per-stream quote/fact rate limiting and a latest-release update entry point.
+- [x] Add the generated simplified action-hero head as the launcher icon.
+- [x] Remove fact-power details from standalone Chuck and Cat fact cards.
+- [x] Rotate cat facts between Cat Fact Ninja and MeowFacts.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.
 - [x] Surface Chuck Norris API and Cat Fact API failures as clear retryable error UI instead of treating fallback text as content.
 - [x] Disable or guard copy/share actions while no successful quote or fact is available.
@@ -28,3 +31,4 @@ Track small follow-ups that should not block the current quote and cat fact feat
 - [ ] Add richer animation polish beyond the current winner celebration and loser swipe-away.
 - [ ] Add a share-card generator that renders the current quote/fact as a themed image card, with themes such as classified file, retro action poster, and cat fact interruption.
 - [ ] Add a lightweight daily challenge around one quote/fact, such as rating the power level, guessing the category, or deciding whether a cat survives the fact.
+- [ ] Revisit Chuck source rotation if a reliable free/no-auth Chuck Norris API besides `api.chucknorris.io` becomes available.
