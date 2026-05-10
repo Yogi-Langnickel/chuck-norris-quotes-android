@@ -7,7 +7,7 @@ A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, a
 The easiest way to install the app on your own phone is through the latest GitHub release:
 
 1. Open `https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest` on your Android phone.
-2. Download the `chuck-norris-quotes-android-1.3.0-debug.apk` asset.
+2. Download the `chuck-norris-quotes-android-1.3.1-debug.apk` asset.
 3. If Android asks, allow your browser or file manager to install unknown apps.
 4. Open the downloaded APK and confirm installation.
 
@@ -24,7 +24,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 To install a downloaded release asset:
 
 ```bash
-adb install -r chuck-norris-quotes-android-1.3.0-debug.apk
+adb install -r chuck-norris-quotes-android-1.3.1-debug.apk
 ```
 
 ## Build Locally
@@ -54,6 +54,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - Rotates random cat facts between `catfact.ninja` and MeowFacts.
 - Fetches random dog facts from Dog API.
 - Runs a battle-first mode where the user swipes away the loser, the winner scores, and a new challenger from another fact stream slides in.
+- Uses spring settling and continuous exit motion for smoother battle swipes.
 - Tracks personal daily, weekly, and monthly winners locally.
 - Separates Battle Mode, Chuck Facts, Cat Facts, and Dog Facts into dedicated tabs.
 - Limits Chuck, Cat, and Dog refresh streams to 10 requests per minute each.
@@ -70,8 +71,8 @@ The app requests internet access so it can fetch quotes, cat facts, and dog fact
 
 ## Current Release
 
-- Version: `1.3.0`
-- APK SHA-256: `dbb3a63f607be3debab8a98fc9c321bb7fbb7925aa9264096c1620981fd631a7`
+- Version: `1.3.1`
+- APK SHA-256: `8d2becf73f3561e0cfe4ae1f947b87d21a2a700317706c04387e539aae930045`
 
 ## License
 
