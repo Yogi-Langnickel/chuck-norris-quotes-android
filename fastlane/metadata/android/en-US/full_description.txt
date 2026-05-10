@@ -8,6 +8,7 @@ Key Features:
 - Fetch random dog facts from Dog API.
 - Start a quote battle, swipe away the loser, and track daily, weekly, and monthly local scores.
 - Bring in the next challenger from a random non-winner fact stream, with fallback if an API fails.
+- Enjoy smoother battle swipes with spring settling for cancelled drags and continuous loser exit motion.
 - Switch between dedicated Battle Mode, Chuck Facts, Cat Facts, and Dog Facts tabs.
 - Open the latest GitHub release from inside the app for easier manual updates.
 - Copy or share the current quote or fact.

@@ -2,7 +2,10 @@ package com.yogi.chucknorris.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
@@ -36,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +57,7 @@ import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
 import com.yogi.chucknorris.domain.BattleWinner
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -271,20 +276,46 @@ private fun BattleContenderCard(
     onSwipedAway: (Float) -> Unit
 ) {
     val entryOffset = remember { Animatable(0f) }
-    var dragOffset by remember { mutableFloatStateOf(0f) }
+    val settleScope = rememberCoroutineScope()
+    var dragOffset by remember(contender.quote.id) { mutableFloatStateOf(0f) }
+    var isSettling by remember(contender.quote.id) { mutableStateOf(false) }
+
+    fun settleDragOffset() {
+        if (kotlin.math.abs(dragOffset) < 0.5f || isSettling) return
+
+        isSettling = true
+        settleScope.launch {
+            val start = dragOffset
+            Animatable(start).animateTo(
+                targetValue = 0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            ) {
+                dragOffset = value
+            }
+            dragOffset = 0f
+            isSettling = false
+        }
+    }
+
     val scale by animateFloatAsState(
         targetValue = if (isWinner) 1.02f else 1f,
-        animationSpec = tween(durationMillis = 450),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
         label = "battleScale"
     )
     val celebrationProgress by animateFloatAsState(
         targetValue = if (isWinner) 1f else 0f,
-        animationSpec = tween(durationMillis = 850),
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
         label = "winnerCelebration"
     )
     val loserSwipeProgress by animateFloatAsState(
         targetValue = if (isLoser) 1f else 0f,
-        animationSpec = tween(durationMillis = 650),
+        animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
         label = "loserSwipe"
     )
 
@@ -303,22 +334,27 @@ private fun BattleContenderCard(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInput(canSelect) {
-                    if (!canSelect) return@pointerInput
+                .pointerInput(canSelect, isSettling, contender.quote.id) {
+                    if (!canSelect || isSettling) return@pointerInput
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             val threshold = size.width * 0.22f
                             if (kotlin.math.abs(dragOffset) >= threshold) {
                                 val direction = if (dragOffset >= 0f) 1f else -1f
                                 onSwipedAway(direction)
+                            } else {
+                                settleDragOffset()
                             }
-                            dragOffset = 0f
                         },
                         onDragCancel = {
-                            dragOffset = 0f
+                            settleDragOffset()
                         },
-                        onHorizontalDrag = { _, dragAmount ->
-                            dragOffset += dragAmount
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            dragOffset = (dragOffset + dragAmount).coerceIn(
+                                minimumValue = -size.width * 0.62f,
+                                maximumValue = size.width * 0.62f
+                            )
                         }
                     )
                 }
