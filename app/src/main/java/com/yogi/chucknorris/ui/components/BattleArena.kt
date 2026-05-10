@@ -48,10 +48,12 @@ import com.yogi.chucknorris.domain.BattleWinner
 @Composable
 fun BattleArena(
     battleRound: BattleRound?,
+    selectedWinner: BattleWinner?,
     selectedPeriod: BattlePeriod,
     battleScores: Map<BattlePeriod, BattleScore>,
     isLoading: Boolean,
     onPeriodSelected: (BattlePeriod) -> Unit,
+    onWinnerSelected: (BattleWinner) -> Unit,
     onBattleClick: () -> Unit
 ) {
     val score = battleScores[selectedPeriod] ?: BattleScore()
@@ -124,22 +126,61 @@ fun BattleArena(
             BattleContenderCard(
                 label = stringResource(R.string.chuck_contender),
                 contender = battleRound.chuck,
-                isWinner = battleRound.winner == BattleWinner.CHUCK
+                isWinner = selectedWinner == BattleWinner.CHUCK,
+                canSelect = selectedWinner == null && !isLoading,
+                actionLabel = stringResource(R.string.choose_chuck_winner),
+                onSelect = { onWinnerSelected(BattleWinner.CHUCK) }
             )
             BattleContenderCard(
                 label = stringResource(R.string.cat_contender),
                 contender = battleRound.cat,
-                isWinner = battleRound.winner == BattleWinner.CAT
+                isWinner = selectedWinner == BattleWinner.CAT,
+                canSelect = selectedWinner == null && !isLoading,
+                actionLabel = stringResource(R.string.choose_cat_winner),
+                onSelect = { onWinnerSelected(BattleWinner.CAT) }
             )
+            BattleChoiceStatus(selectedWinner = selectedWinner)
             Text(
-                text = battleRound.resultText(),
+                text = battleRound.powerResultText(),
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+@Composable
+private fun BattleChoiceStatus(selectedWinner: BattleWinner?) {
+    val message = when (selectedWinner) {
+        BattleWinner.CHUCK -> stringResource(R.string.battle_choice_chuck)
+        BattleWinner.CAT -> stringResource(R.string.battle_choice_cat)
+        BattleWinner.DRAW, null -> stringResource(R.string.battle_choice_pending)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = if (selectedWinner == null) {
+            MaterialTheme.colorScheme.tertiaryContainer
+        } else {
+            MaterialTheme.colorScheme.primaryContainer
+        },
+        contentColor = if (selectedWinner == null) {
+            MaterialTheme.colorScheme.onTertiaryContainer
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        }
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -238,7 +279,10 @@ private fun EmptyBattleState() {
 private fun BattleContenderCard(
     label: String,
     contender: BattleContender,
-    isWinner: Boolean
+    isWinner: Boolean,
+    canSelect: Boolean,
+    actionLabel: String,
+    onSelect: () -> Unit
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = contender.powerProfile.progress,
@@ -246,7 +290,7 @@ private fun BattleContenderCard(
         label = "battleProgress"
     )
     val scale by animateFloatAsState(
-        targetValue = if (isWinner) 1.02f else 0.98f,
+        targetValue = if (isWinner) 1.02f else 1f,
         animationSpec = tween(durationMillis = 450),
         label = "battleScale"
     )
@@ -334,6 +378,14 @@ private fun BattleContenderCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            Button(
+                onClick = onSelect,
+                enabled = canSelect,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(actionLabel)
+            }
         }
     }
 }
@@ -361,7 +413,7 @@ private fun BattleScore.periodLeaderText(): String {
 }
 
 @Composable
-private fun BattleRound.resultText(): String {
+private fun BattleRound.powerResultText(): String {
     return when (winner) {
         BattleWinner.CHUCK -> stringResource(R.string.battle_result_chuck, margin)
         BattleWinner.CAT -> stringResource(R.string.battle_result_cat, margin)

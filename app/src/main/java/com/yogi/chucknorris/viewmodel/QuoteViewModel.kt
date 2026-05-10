@@ -12,6 +12,7 @@ import com.yogi.chucknorris.data.repository.QuoteRepository
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
+import com.yogi.chucknorris.domain.BattleWinner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -39,6 +40,9 @@ class QuoteViewModel(
     private val _battleRound = MutableLiveData<BattleRound>()
     val battleRound: LiveData<BattleRound> get() = _battleRound
 
+    private val _selectedBattleWinner = MutableLiveData<BattleWinner?>()
+    val selectedBattleWinner: LiveData<BattleWinner?> get() = _selectedBattleWinner
+
     private val _battleScores = MutableLiveData(battleScoreStore.getScores())
     val battleScores: LiveData<Map<BattlePeriod, BattleScore>> get() = _battleScores
 
@@ -49,6 +53,7 @@ class QuoteViewModel(
     val isBattleLoading: LiveData<Boolean> get() = _isBattleLoading
 
     private var activeQuoteRequest: Job? = null
+    private var recordedBattleRound: BattleRound? = null
 
     fun fetchRandomQuote() {
         activeQuoteRequest?.cancel()
@@ -88,13 +93,14 @@ class QuoteViewModel(
             try {
                 val round = quoteRepository.getBattleRound()
                 _battleRound.value = round
+                _selectedBattleWinner.value = null
+                recordedBattleRound = null
                 val featuredQuote = if (round.chuck.powerProfile.score >= round.cat.powerProfile.score) {
                     round.chuck.quote
                 } else {
                     round.cat.quote
                 }
                 _quoteUiState.value = QuoteUiState.Success(featuredQuote)
-                _battleScores.value = battleScoreStore.recordBattle(round.winner)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -103,6 +109,23 @@ class QuoteViewModel(
                 _isBattleLoading.value = false
             }
         }
+    }
+
+    fun chooseBattleWinner(winner: BattleWinner) {
+        if (winner == BattleWinner.DRAW) return
+        val round = _battleRound.value ?: return
+        if (recordedBattleRound == round) return
+
+        recordedBattleRound = round
+        _selectedBattleWinner.value = winner
+        _quoteUiState.value = QuoteUiState.Success(
+            when (winner) {
+                BattleWinner.CHUCK -> round.chuck.quote
+                BattleWinner.CAT -> round.cat.quote
+                BattleWinner.DRAW -> round.chuck.quote
+            }
+        )
+        _battleScores.value = battleScoreStore.recordBattle(winner)
     }
 
     fun retryQuoteLoad(request: QuoteRequest) {

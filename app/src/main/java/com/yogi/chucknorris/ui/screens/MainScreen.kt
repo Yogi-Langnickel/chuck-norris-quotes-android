@@ -40,6 +40,7 @@ fun MainScreen(
 ) {
     val quoteUiState by quoteViewModel.quoteUiState.observeAsState(QuoteUiState.Loading)
     val battleRound by quoteViewModel.battleRound.observeAsState()
+    val selectedWinner by quoteViewModel.selectedBattleWinner.observeAsState()
     val selectedPeriod by quoteViewModel.selectedPeriod.observeAsState(BattlePeriod.DAILY)
     val battleScores by quoteViewModel.battleScores.observeAsState(emptyMap<BattlePeriod, BattleScore>())
     val isBattleLoading by quoteViewModel.isBattleLoading.observeAsState(false)
@@ -99,10 +100,12 @@ fun MainScreen(
             ) {
                 BattleArena(
                     battleRound = battleRound,
+                    selectedWinner = selectedWinner,
                     selectedPeriod = selectedPeriod,
                     battleScores = battleScores,
                     isLoading = isBattleLoading || isQuoteLoading,
                     onPeriodSelected = quoteViewModel::selectPeriod,
+                    onWinnerSelected = quoteViewModel::chooseBattleWinner,
                     onBattleClick = quoteViewModel::fetchBattleRound
                 )
                 when (val state = quoteUiState) {
