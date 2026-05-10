@@ -6,6 +6,7 @@ Track small follow-ups that should not block the current quote and cat fact feat
 
 - [x] Make Quote Battle scoring user-selected: a loaded round does not update scores until the user chooses Chuck or Cat, and each round records only once.
 - [x] Keep the battle winner in place, swipe the loser away, and refresh only the losing side as the next challenger.
+- [x] Replace battle select buttons with swipe-away selection and bring the refreshed challenger in from the opposite side.
 - [x] Split the app into Battle Mode, Chuck Facts, and Cat Facts tabs.
 - [x] Add per-stream quote/fact rate limiting and a latest-release update entry point.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.

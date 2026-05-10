@@ -1,11 +1,12 @@
 package com.yogi.chucknorris.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -33,10 +33,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +68,9 @@ fun BattleArena(
     onRefreshBoth: () -> Unit
 ) {
     val score = battleScores[selectedPeriod] ?: BattleScore()
+    var loserExitDirection by remember { mutableFloatStateOf(1f) }
+    var chuckEntryDirection by remember { mutableStateOf<Float?>(null) }
+    var catEntryDirection by remember { mutableStateOf<Float?>(null) }
 
     LaunchedEffect(battleRound?.chuck?.quote?.id, battleRound?.cat?.quote?.id, selectedWinner) {
         if (selectedWinner == BattleWinner.CHUCK || selectedWinner == BattleWinner.CAT) {
@@ -94,26 +102,6 @@ fun BattleArena(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Button(
-                onClick = onRefreshBoth,
-                enabled = !isLoading
-            ) {
-                androidx.compose.material3.Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    stringResource(
-                        if (battleRound == null) {
-                            R.string.start_battle
-                        } else {
-                            R.string.rematch_battle
-                        }
-                    )
-                )
-            }
         }
 
         FlowRow(
@@ -131,7 +119,6 @@ fun BattleArena(
         }
 
         ScoreStrip(period = selectedPeriod, score = score)
-        PeriodLeaderBanner(score = score)
 
         if (battleRound == null) {
             EmptyBattleState()
@@ -141,79 +128,34 @@ fun BattleArena(
                 contender = battleRound.chuck,
                 isWinner = selectedWinner == BattleWinner.CHUCK,
                 isLoser = selectedWinner == BattleWinner.CAT,
-                swipeDirection = -1f,
+                loserExitDirection = loserExitDirection,
+                entryDirection = chuckEntryDirection,
                 canSelect = selectedWinner == null && !isLoading,
-                actionLabel = stringResource(R.string.choose_chuck_winner),
-                onSelect = { onWinnerSelected(BattleWinner.CHUCK) }
+                onSwipedAway = { direction ->
+                    loserExitDirection = direction
+                    chuckEntryDirection = -direction
+                    onWinnerSelected(BattleWinner.CAT)
+                }
             )
             BattleContenderCard(
                 label = stringResource(R.string.cat_contender),
                 contender = battleRound.cat,
                 isWinner = selectedWinner == BattleWinner.CAT,
                 isLoser = selectedWinner == BattleWinner.CHUCK,
-                swipeDirection = 1f,
+                loserExitDirection = loserExitDirection,
+                entryDirection = catEntryDirection,
                 canSelect = selectedWinner == null && !isLoading,
-                actionLabel = stringResource(R.string.choose_cat_winner),
-                onSelect = { onWinnerSelected(BattleWinner.CAT) }
+                onSwipedAway = { direction ->
+                    loserExitDirection = direction
+                    catEntryDirection = -direction
+                    onWinnerSelected(BattleWinner.CHUCK)
+                }
             )
-            BattleChoiceStatus(selectedWinner = selectedWinner)
-            AnimatedVisibility(visible = selectedWinner != null) {
-                PostSelectionControls(
-                    isLoading = isLoading,
-                    onRefreshBoth = onRefreshBoth
-                )
-            }
+            TieBreakButton(
+                isLoading = isLoading || selectedWinner != null,
+                onRefreshBoth = onRefreshBoth
+            )
         }
-    }
-}
-
-@Composable
-private fun BattleChoiceStatus(selectedWinner: BattleWinner?) {
-    val message = when (selectedWinner) {
-            BattleWinner.CHUCK -> stringResource(R.string.battle_choice_chuck)
-            BattleWinner.CAT -> stringResource(R.string.battle_choice_cat)
-            BattleWinner.DRAW, null -> stringResource(R.string.battle_choice_pending)
-        }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = if (selectedWinner == null) {
-            MaterialTheme.colorScheme.tertiaryContainer
-        } else {
-            MaterialTheme.colorScheme.primaryContainer
-        },
-        contentColor = if (selectedWinner == null) {
-            MaterialTheme.colorScheme.onTertiaryContainer
-        } else {
-            MaterialTheme.colorScheme.onPrimaryContainer
-        }
-    ) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun PeriodLeaderBanner(score: BattleScore) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-    ) {
-        Text(
-            text = score.periodLeaderText(),
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.SemiBold
-        )
     }
 }
 
@@ -221,7 +163,7 @@ private fun PeriodLeaderBanner(score: BattleScore) {
 private fun ScoreStrip(period: BattlePeriod, score: BattleScore) {
     Text(
         text = stringResource(R.string.personal_score_heading, period.label()),
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.SemiBold
     )
@@ -243,7 +185,7 @@ private fun ScoreStrip(period: BattlePeriod, score: BattleScore) {
 }
 
 @Composable
-private fun PostSelectionControls(
+private fun TieBreakButton(
     isLoading: Boolean,
     onRefreshBoth: () -> Unit
 ) {
@@ -252,6 +194,12 @@ private fun PostSelectionControls(
         enabled = !isLoading,
         modifier = Modifier.fillMaxWidth(),
     ) {
+        androidx.compose.material3.Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(stringResource(R.string.tie_break_refresh_both))
     }
 }
@@ -265,12 +213,12 @@ private fun ScorePill(label: String, value: Int, modifier: Modifier = Modifier) 
         color = MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value.toString(),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
@@ -311,11 +259,13 @@ private fun BattleContenderCard(
     contender: BattleContender,
     isWinner: Boolean,
     isLoser: Boolean,
-    swipeDirection: Float,
+    loserExitDirection: Float,
+    entryDirection: Float?,
     canSelect: Boolean,
-    actionLabel: String,
-    onSelect: () -> Unit
+    onSwipedAway: (Float) -> Unit
 ) {
+    val entryOffset = remember { Animatable(0f) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
     val scale by animateFloatAsState(
         targetValue = if (isWinner) 1.02f else 1f,
         animationSpec = tween(durationMillis = 450),
@@ -332,17 +282,49 @@ private fun BattleContenderCard(
         label = "loserSwipe"
     )
 
+    LaunchedEffect(contender.quote.id, entryDirection) {
+        val direction = entryDirection
+        if (direction == null) {
+            entryOffset.snapTo(0f)
+        } else {
+            entryOffset.snapTo(direction)
+            entryOffset.animateTo(0f, animationSpec = tween(durationMillis = 420))
+        }
+    }
+
     Box(modifier = Modifier.fillMaxWidth()) {
         WinnerCelebration(progress = celebrationProgress)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .pointerInput(canSelect) {
+                    if (!canSelect) return@pointerInput
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            val threshold = size.width * 0.22f
+                            if (kotlin.math.abs(dragOffset) >= threshold) {
+                                val direction = if (dragOffset >= 0f) 1f else -1f
+                                onSwipedAway(direction)
+                            }
+                            dragOffset = 0f
+                        },
+                        onDragCancel = {
+                            dragOffset = 0f
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            dragOffset += dragAmount
+                        }
+                    )
+                }
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                    translationX = swipeDirection * loserSwipeProgress * size.width * 1.2f
+                    translationX = dragOffset +
+                        (entryOffset.value * size.width * 1.2f) +
+                        (loserExitDirection * loserSwipeProgress * size.width * 1.2f)
                     alpha = (1f - loserSwipeProgress).coerceAtLeast(0.12f)
-                    rotationZ = swipeDirection * loserSwipeProgress * 5f
+                    rotationZ = (dragOffset / size.width * 4f) +
+                        loserExitDirection * loserSwipeProgress * 5f
                 },
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(
@@ -400,20 +382,6 @@ private fun BattleContenderCard(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
-                Button(
-                    onClick = onSelect,
-                    enabled = canSelect,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        if (isWinner) {
-                            stringResource(R.string.winner_selected)
-                        } else {
-                            actionLabel
-                        }
-                    )
-                }
             }
         }
     }
@@ -454,18 +422,5 @@ private fun BattlePeriod.label(): String {
         BattlePeriod.DAILY -> stringResource(R.string.period_daily)
         BattlePeriod.WEEKLY -> stringResource(R.string.period_weekly)
         BattlePeriod.MONTHLY -> stringResource(R.string.period_monthly)
-    }
-}
-
-@Composable
-private fun BattleScore.periodLeaderText(): String {
-    if (totalBattles == 0) {
-        return stringResource(R.string.battle_leader_empty)
-    }
-
-    return when (leader) {
-        BattleWinner.CHUCK -> stringResource(R.string.battle_leader_chuck, leaderMargin)
-        BattleWinner.CAT -> stringResource(R.string.battle_leader_cat, leaderMargin)
-        BattleWinner.DRAW -> stringResource(R.string.battle_leader_draw)
     }
 }

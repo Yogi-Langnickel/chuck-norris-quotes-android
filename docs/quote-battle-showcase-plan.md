@@ -1,6 +1,6 @@
 # Quote Battle Showcase Plan
 
-Status: implemented for v1.2.0 showcase
+Status: implemented for v1.2.1 showcase
 
 ## Goal
 
@@ -9,9 +9,9 @@ Make Quote Battle presentable for a morning demo on May 12, 2026 by turning the 
 ## Implemented Slice
 
 - A battle round loads Chuck and Cat contenders without changing score totals.
-- The user chooses Chuck or Cat as the winner.
+- The user swipes away the contender they do not want; the remaining contender wins the point.
 - Daily, weekly, and monthly local scores update once per chosen round.
-- The loser swipes away, then refreshes with a new challenger while the winner stays in the battle.
+- The refreshed challenger slides in from the opposite side of the swipe.
 - Tie break refreshes both Chuck and Cat without awarding a point.
 - Battle cards no longer show duplicate labels or power scores.
 - Battle Mode, Chuck Facts, and Cat Facts are split into separate tabs.
