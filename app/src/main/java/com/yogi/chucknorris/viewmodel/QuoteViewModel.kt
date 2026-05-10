@@ -26,6 +26,7 @@ sealed interface QuoteUiState {
 enum class QuoteRequest {
     CHUCK_QUOTE,
     CAT_FACT,
+    DOG_FACT,
     BATTLE_ROUND
 }
 
@@ -85,6 +86,21 @@ class QuoteViewModel(
         }
     }
 
+    fun fetchRandomDogFact() {
+        activeQuoteRequest?.cancel()
+        activeQuoteRequest = viewModelScope.launch {
+            _quoteUiState.value = QuoteUiState.Loading
+            try {
+                val fetchedQuote = quoteRepository.getRandomDogFact()
+                _quoteUiState.value = QuoteUiState.Success(fetchedQuote)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.DOG_FACT)
+            }
+        }
+    }
+
     fun fetchBattleRound() {
         activeQuoteRequest?.cancel()
         activeQuoteRequest = viewModelScope.launch {
@@ -95,11 +111,9 @@ class QuoteViewModel(
                 _battleRound.value = round
                 _selectedBattleWinner.value = null
                 recordedBattleRound = null
-                val featuredQuote = if (round.chuck.powerProfile.score >= round.cat.powerProfile.score) {
-                    round.chuck.quote
-                } else {
-                    round.cat.quote
-                }
+                val featuredQuote = round.contenders
+                    .maxBy { it.powerProfile.score }
+                    .quote
                 _quoteUiState.value = QuoteUiState.Success(featuredQuote)
             } catch (e: CancellationException) {
                 throw e
@@ -118,13 +132,9 @@ class QuoteViewModel(
 
         recordedBattleRound = round
         _selectedBattleWinner.value = winner
-        _quoteUiState.value = QuoteUiState.Success(
-            when (winner) {
-                BattleWinner.CHUCK -> round.chuck.quote
-                BattleWinner.CAT -> round.cat.quote
-                BattleWinner.DRAW -> round.chuck.quote
-            }
-        )
+        round.contenderFor(winner)?.quote?.let { winningQuote ->
+            _quoteUiState.value = QuoteUiState.Success(winningQuote)
+        }
         _battleScores.value = battleScoreStore.recordBattle(winner)
     }
 
@@ -137,27 +147,19 @@ class QuoteViewModel(
         activeQuoteRequest = viewModelScope.launch {
             _isBattleLoading.value = true
             try {
-                val nextRound = when (selectedWinner) {
-                    BattleWinner.CHUCK -> BattleRound.from(
-                        chuckQuote = currentRound.chuck.quote,
-                        catFact = quoteRepository.getRandomCatFact()
-                    )
-                    BattleWinner.CAT -> BattleRound.from(
-                        chuckQuote = quoteRepository.getRandomQuote(),
-                        catFact = currentRound.cat.quote
-                    )
-                    BattleWinner.DRAW -> currentRound
+                val winningContender = currentRound.contenderFor(selectedWinner) ?: return@launch
+                val challenger = quoteRepository.getBattleChallenger(
+                    excludedSources = setOf(winningContender.source)
+                )
+                val nextRound = if (currentRound.first.source == winningContender.source) {
+                    BattleRound.from(winningContender, challenger)
+                } else {
+                    BattleRound.from(challenger, winningContender)
                 }
                 _battleRound.value = nextRound
                 _selectedBattleWinner.value = null
                 recordedBattleRound = null
-                _quoteUiState.value = QuoteUiState.Success(
-                    when (selectedWinner) {
-                        BattleWinner.CHUCK -> nextRound.cat.quote
-                        BattleWinner.CAT -> nextRound.chuck.quote
-                        BattleWinner.DRAW -> nextRound.chuck.quote
-                    }
-                )
+                _quoteUiState.value = QuoteUiState.Success(challenger.quote)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -172,6 +174,7 @@ class QuoteViewModel(
         when (request) {
             QuoteRequest.CHUCK_QUOTE -> fetchRandomQuote()
             QuoteRequest.CAT_FACT -> fetchRandomCatFact()
+            QuoteRequest.DOG_FACT -> fetchRandomDogFact()
             QuoteRequest.BATTLE_ROUND -> fetchBattleRound()
         }
     }

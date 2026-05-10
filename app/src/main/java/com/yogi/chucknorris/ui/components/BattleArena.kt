@@ -69,11 +69,11 @@ fun BattleArena(
 ) {
     val score = battleScores[selectedPeriod] ?: BattleScore()
     var loserExitDirection by remember { mutableFloatStateOf(1f) }
-    var chuckEntryDirection by remember { mutableStateOf<Float?>(null) }
-    var catEntryDirection by remember { mutableStateOf<Float?>(null) }
+    var firstEntryDirection by remember { mutableStateOf<Float?>(null) }
+    var secondEntryDirection by remember { mutableStateOf<Float?>(null) }
 
-    LaunchedEffect(battleRound?.chuck?.quote?.id, battleRound?.cat?.quote?.id, selectedWinner) {
-        if (selectedWinner == BattleWinner.CHUCK || selectedWinner == BattleWinner.CAT) {
+    LaunchedEffect(battleRound?.first?.quote?.id, battleRound?.second?.quote?.id, selectedWinner) {
+        if (selectedWinner != null && selectedWinner != BattleWinner.DRAW) {
             delay(720)
             onLoserSwipedAway()
         }
@@ -124,31 +124,33 @@ fun BattleArena(
             EmptyBattleState()
         } else {
             BattleContenderCard(
-                label = stringResource(R.string.chuck_contender),
-                contender = battleRound.chuck,
-                isWinner = selectedWinner == BattleWinner.CHUCK,
-                isLoser = selectedWinner == BattleWinner.CAT,
+                contender = battleRound.first,
+                isWinner = selectedWinner == battleRound.first.source.winner,
+                isLoser = selectedWinner != null &&
+                    selectedWinner != BattleWinner.DRAW &&
+                    selectedWinner != battleRound.first.source.winner,
                 loserExitDirection = loserExitDirection,
-                entryDirection = chuckEntryDirection,
+                entryDirection = firstEntryDirection,
                 canSelect = selectedWinner == null && !isLoading,
                 onSwipedAway = { direction ->
                     loserExitDirection = direction
-                    chuckEntryDirection = -direction
-                    onWinnerSelected(BattleWinner.CAT)
+                    firstEntryDirection = -direction
+                    onWinnerSelected(battleRound.second.source.winner)
                 }
             )
             BattleContenderCard(
-                label = stringResource(R.string.cat_contender),
-                contender = battleRound.cat,
-                isWinner = selectedWinner == BattleWinner.CAT,
-                isLoser = selectedWinner == BattleWinner.CHUCK,
+                contender = battleRound.second,
+                isWinner = selectedWinner == battleRound.second.source.winner,
+                isLoser = selectedWinner != null &&
+                    selectedWinner != BattleWinner.DRAW &&
+                    selectedWinner != battleRound.second.source.winner,
                 loserExitDirection = loserExitDirection,
-                entryDirection = catEntryDirection,
+                entryDirection = secondEntryDirection,
                 canSelect = selectedWinner == null && !isLoading,
                 onSwipedAway = { direction ->
                     loserExitDirection = direction
-                    catEntryDirection = -direction
-                    onWinnerSelected(BattleWinner.CHUCK)
+                    secondEntryDirection = -direction
+                    onWinnerSelected(battleRound.first.source.winner)
                 }
             )
             TieBreakButton(
@@ -179,6 +181,11 @@ private fun ScoreStrip(period: BattlePeriod, score: BattleScore) {
         ScorePill(
             label = stringResource(R.string.cat_score),
             value = score.catWins,
+            modifier = Modifier.weight(1f)
+        )
+        ScorePill(
+            label = stringResource(R.string.dog_score),
+            value = score.dogWins,
             modifier = Modifier.weight(1f)
         )
     }
@@ -255,7 +262,6 @@ private fun EmptyBattleState() {
 
 @Composable
 private fun BattleContenderCard(
-    label: String,
     contender: BattleContender,
     isWinner: Boolean,
     isLoser: Boolean,
@@ -361,7 +367,7 @@ private fun BattleContenderCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = label.take(2).uppercase(),
+                                    text = contender.source.initials,
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -369,7 +375,7 @@ private fun BattleContenderCard(
                         }
                         Column {
                             Text(
-                                text = label,
+                                text = contender.source.scoreLabel,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )

@@ -1,12 +1,14 @@
-Welcome to the Chuck Norris Quotes app! This application fetches random Chuck Norris quotes from the Chuck Norris API and random cat facts from catfact.ninja, then displays them in a user-friendly interface.
+Welcome to the Chuck Norris Quotes app! This application fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them in a user-friendly interface.
 
 With a clean and modern design, the app utilizes Jetpack Compose for a responsive UI and follows the MVVM architecture for maintainability and scalability.
 
 Key Features:
 - Fetch random Chuck Norris quotes with a simple tap.
 - Fetch random cat facts from rotating public sources.
-- Start a Chuck vs Cat battle, swipe away the loser, and track daily, weekly, and monthly local scores.
-- Switch between dedicated Battle Mode, Chuck Facts, and Cat Facts tabs.
+- Fetch random dog facts from Dog API.
+- Start a quote battle, swipe away the loser, and track daily, weekly, and monthly local scores.
+- Bring in the next challenger from a random non-winner fact stream, with fallback if an API fails.
+- Switch between dedicated Battle Mode, Chuck Facts, Cat Facts, and Dog Facts tabs.
 - Open the latest GitHub release from inside the app for easier manual updates.
 - Copy or share the current quote or fact.
 - Beautifully designed UI using Jetpack Compose.

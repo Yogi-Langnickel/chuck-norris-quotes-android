@@ -12,6 +12,8 @@ Track small follow-ups that should not block the current quote and cat fact feat
 - [x] Add the generated simplified action-hero head as the launcher icon.
 - [x] Remove fact-power details from standalone Chuck and Cat fact cards.
 - [x] Rotate cat facts between Cat Fact Ninja and MeowFacts.
+- [x] Add a Dog Facts tab and include dog facts as an eligible battle challenger stream.
+- [x] Refresh battle challengers from a random non-winner stream with fallback when an eligible API fails.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.
 - [x] Surface Chuck Norris API and Cat Fact API failures as clear retryable error UI instead of treating fallback text as content.
 - [x] Disable or guard copy/share actions while no successful quote or fact is available.

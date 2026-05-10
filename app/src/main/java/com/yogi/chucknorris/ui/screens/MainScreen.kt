@@ -36,7 +36,8 @@ import com.yogi.chucknorris.ui.components.BattleArena
 private enum class AppTab {
     BATTLE,
     CHUCK,
-    CAT
+    CAT,
+    DOG
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +69,7 @@ fun MainScreen(
             AppTab.BATTLE -> if (battleRound == null) quoteViewModel.fetchBattleRound()
             AppTab.CHUCK -> quoteViewModel.fetchRandomQuote()
             AppTab.CAT -> quoteViewModel.fetchRandomCatFact()
+            AppTab.DOG -> quoteViewModel.fetchRandomDogFact()
         }
     }
 
@@ -139,6 +141,7 @@ fun MainScreen(
                                         AppTab.BATTLE -> stringResource(R.string.tab_battle_mode)
                                         AppTab.CHUCK -> stringResource(R.string.tab_chuck_facts)
                                         AppTab.CAT -> stringResource(R.string.tab_cat_facts)
+                                        AppTab.DOG -> stringResource(R.string.tab_dog_facts)
                                     }
                                 )
                             }
@@ -200,6 +203,29 @@ fun MainScreen(
                         isQuoteLoading = isQuoteLoading,
                         onRefresh = quoteViewModel::fetchRandomCatFact,
                         onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.CAT_FACT) },
+                        onCopy = { quoteData ->
+                            clipboardManager.setText(AnnotatedString(quoteData.value))
+                            scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
+                        },
+                        onShare = { quoteData ->
+                            shareQuote(
+                                quote = quoteData.value,
+                                chooserTitle = shareChooserTitle,
+                                context = context,
+                                onShareUnavailable = {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(shareUnavailableMessage)
+                                    }
+                                }
+                            )
+                        }
+                    )
+                    AppTab.DOG -> FactTabContent(
+                        quoteUiState = quoteUiState,
+                        expectedSourceLabel = "Dog Fact",
+                        isQuoteLoading = isQuoteLoading,
+                        onRefresh = quoteViewModel::fetchRandomDogFact,
+                        onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.DOG_FACT) },
                         onCopy = { quoteData ->
                             clipboardManager.setText(AnnotatedString(quoteData.value))
                             scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
@@ -312,6 +338,7 @@ private fun QuoteErrorCard(
                 text = when (request) {
                     QuoteRequest.CHUCK_QUOTE -> stringResource(R.string.quote_error_chuck)
                     QuoteRequest.CAT_FACT -> stringResource(R.string.quote_error_cat)
+                    QuoteRequest.DOG_FACT -> stringResource(R.string.quote_error_dog)
                     QuoteRequest.BATTLE_ROUND -> stringResource(R.string.quote_error_battle)
                 },
                 style = MaterialTheme.typography.bodyLarge,
