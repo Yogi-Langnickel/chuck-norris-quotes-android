@@ -89,7 +89,15 @@ fun BattleArena(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.start_battle))
+                Text(
+                    stringResource(
+                        if (battleRound == null) {
+                            R.string.start_battle
+                        } else {
+                            R.string.rematch_battle
+                        }
+                    )
+                )
             }
         }
 
@@ -108,6 +116,7 @@ fun BattleArena(
         }
 
         ScoreStrip(score = score)
+        PeriodLeaderBanner(score = score)
 
         if (battleRound == null) {
             EmptyBattleState()
@@ -131,6 +140,24 @@ fun BattleArena(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Composable
+private fun PeriodLeaderBanner(score: BattleScore) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+    ) {
+        Text(
+            text = score.periodLeaderText(),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -317,6 +344,19 @@ private fun BattlePeriod.label(): String {
         BattlePeriod.DAILY -> stringResource(R.string.period_daily)
         BattlePeriod.WEEKLY -> stringResource(R.string.period_weekly)
         BattlePeriod.MONTHLY -> stringResource(R.string.period_monthly)
+    }
+}
+
+@Composable
+private fun BattleScore.periodLeaderText(): String {
+    if (totalBattles == 0) {
+        return stringResource(R.string.battle_leader_empty)
+    }
+
+    return when (leader) {
+        BattleWinner.CHUCK -> stringResource(R.string.battle_leader_chuck, leaderMargin)
+        BattleWinner.CAT -> stringResource(R.string.battle_leader_cat, leaderMargin)
+        BattleWinner.DRAW -> stringResource(R.string.battle_leader_draw)
     }
 }
 
