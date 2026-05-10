@@ -1,0 +1,53 @@
+package com.yogi.chucknorris.domain
+
+import com.yogi.chucknorris.data.model.Quote
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class QuoteBattleTest {
+
+    @Test
+    fun battleRoundFrom_selectsWinnerFromPowerScores() {
+        val chuckQuote = Quote("chuck", "Chuck Norris counted to infinity. Twice.", "Chuck Norris")
+        val catFact = Quote("cat", "Cats can rotate their ears.", "Cat Fact")
+
+        val round = BattleRound.from(chuckQuote, catFact)
+
+        val expectedWinner = when {
+            round.chuck.powerProfile.score > round.cat.powerProfile.score -> BattleWinner.CHUCK
+            round.cat.powerProfile.score > round.chuck.powerProfile.score -> BattleWinner.CAT
+            else -> BattleWinner.DRAW
+        }
+        assertEquals(expectedWinner, round.winner)
+        assertEquals(
+            kotlin.math.abs(round.chuck.powerProfile.score - round.cat.powerProfile.score),
+            round.margin
+        )
+    }
+
+    @Test
+    fun battleScore_recordIncrementsOnlyWinnerBucket() {
+        val score = BattleScore()
+            .record(BattleWinner.CHUCK)
+            .record(BattleWinner.CAT)
+            .record(BattleWinner.DRAW)
+            .record(BattleWinner.CHUCK)
+
+        assertEquals(2, score.chuckWins)
+        assertEquals(1, score.catWins)
+        assertEquals(1, score.draws)
+        assertEquals(4, score.totalBattles)
+    }
+
+    @Test
+    fun battleRoundFrom_keepsScoresInsidePowerProfileRange() {
+        val round = BattleRound.from(
+            Quote("chuck", "Chuck Norris can slam a revolving door.", "Chuck Norris"),
+            Quote("cat", "Cats sleep for many hours each day.", "Cat Fact")
+        )
+
+        assertTrue(round.chuck.powerProfile.score in 25..100)
+        assertTrue(round.cat.powerProfile.score in 25..100)
+    }
+}

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yogi.chucknorris.data.local.AndroidBattleScoreStore
 import com.yogi.chucknorris.ui.screens.MainScreen
 import com.yogi.chucknorris.ui.theme.ChuckNorrisTheme
 import com.yogi.chucknorris.viewmodel.QuoteViewModel
@@ -29,6 +30,9 @@ class MainActivity : ComponentActivity() {
         // 2. Inject the client into the service, then into the repository
         val apiService = ApiService(client = ktorClient)
         val repository = QuoteRepository(apiService)
+        val battleScoreStore = AndroidBattleScoreStore(
+            getSharedPreferences("quote_battle_scores", MODE_PRIVATE)
+        )
 
         enableEdgeToEdge()
 
@@ -36,7 +40,7 @@ class MainActivity : ComponentActivity() {
             ChuckNorrisTheme {
                 // 3. Use the factory to provide the repository to the ViewModel
                 val quoteViewModel: QuoteViewModel = viewModel(
-                    factory = QuoteViewModel.provideFactory(repository)
+                    factory = QuoteViewModel.provideFactory(repository, battleScoreStore)
                 )
                 MainScreen(
                     quoteViewModel = quoteViewModel,

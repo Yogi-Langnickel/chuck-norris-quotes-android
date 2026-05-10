@@ -1,1 +1,1 @@
-Chuck Norris is here to deliver some laughs! Enjoy random quotes from the legendary martial artist and actor.
+Enjoy random Chuck Norris quotes and cat facts in a lightweight Kotlin app.

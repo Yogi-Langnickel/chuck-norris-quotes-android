@@ -1,6 +1,33 @@
 <resources>
     <string name="app_name">Chuck Norris Quotes</string>
+    <string name="app_tagline">Random facts with power ratings</string>
     <string name="fetch_quote_button">Fetch a New Quote</string>
+    <string name="get_new_quote">New Quote</string>
+    <string name="get_cat_fact">Cat Fact</string>
+    <string name="copy_quote">Copy quote</string>
+    <string name="share_quote">Share quote</string>
+    <string name="quote_copied">Quote copied to clipboard</string>
+    <string name="share_chooser_title">Share quote</string>
+    <string name="close_app">Close app</string>
+    <string name="quote_power_badge">%1$s / %2$s</string>
+    <string name="fact_power">Fact power</string>
+    <string name="quote_power_detail">%1$s %2$d words scanned.</string>
+    <string name="battle_title">Chuck vs Cat</string>
+    <string name="battle_subtitle">Quote Battle</string>
+    <string name="start_battle">Battle</string>
+    <string name="period_daily">Daily</string>
+    <string name="period_weekly">Weekly</string>
+    <string name="period_monthly">Monthly</string>
+    <string name="chuck_score">Chuck</string>
+    <string name="cat_score">Cat</string>
+    <string name="draw_score">Draws</string>
+    <string name="battle_empty">Start a round to compare a Chuck Norris quote against a cat fact.</string>
+    <string name="chuck_contender">Chuck</string>
+    <string name="cat_contender">Cat</string>
+    <string name="battle_power_value">%1$d</string>
+    <string name="battle_result_chuck">Chuck wins by %1$d power.</string>
+    <string name="battle_result_cat">Cat wins by %1$d power.</string>
+    <string name="battle_result_draw">Draw. The universe refuses to choose.</string>
     <string name="loading">Loading...</string>
     <string name="error_message">Error fetching quote. Please try again.</string>
 </resources>

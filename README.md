@@ -1,6 +1,6 @@
 # Chuck Norris Quotes Android
 
-A small Kotlin Android app that fetches random quotes from the public [Chuck Norris API](https://api.chucknorris.io/) and displays them with a Jetpack Compose interface.
+A small Kotlin Android app that fetches random Chuck Norris quotes and cat facts from public APIs, then displays them with a Jetpack Compose interface.
 
 ## Install On Android
 
@@ -50,14 +50,17 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Features
 
-- Fetches random quotes from `api.chucknorris.io`.
+- Fetches random Chuck Norris quotes from `api.chucknorris.io`.
+- Fetches random cat facts from `catfact.ninja`.
+- Shows a local-only fact power profile for the current quote or fact.
+- Supports copying and sharing the current quote or fact.
 - Uses Kotlin and Jetpack Compose.
 - Keeps API access behind a repository layer.
 - Includes a GitHub Actions workflow that runs unit tests and uploads a debug APK artifact.
 
 ## Privacy
 
-The app requests internet access so it can fetch quotes. It does not require login, payments, contacts, location, or local account access.
+The app requests internet access so it can fetch quotes and cat facts from public third-party APIs. It does not require login, payments, contacts, location, or local account access.
 
 ## Current Release
 

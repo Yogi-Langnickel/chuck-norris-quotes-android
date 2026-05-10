@@ -4,10 +4,9 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import com.yogi.chucknorris.data.service.JokeResponse
 
-class ApiService(private val client: HttpClient) {
-    suspend fun getRandomJoke(): String {
+class ApiService(private val client: HttpClient) : FactService {
+    override suspend fun getRandomJoke(): String {
         return try {
             val response = client.get("https://api.chucknorris.io/jokes/random")
             if (response.status == HttpStatusCode.OK) {
@@ -17,7 +16,21 @@ class ApiService(private val client: HttpClient) {
                 "Chuck Norris is currently unreachable."
             }
         } catch (e: Exception) {
-            "Network error: ${e.message}"
+            "Chuck Norris is currently unreachable."
+        }
+    }
+
+    override suspend fun getRandomCatFact(): String {
+        return try {
+            val response = client.get("https://catfact.ninja/fact")
+            if (response.status == HttpStatusCode.OK) {
+                val catFact: CatFactResponse = response.body()
+                catFact.fact
+            } else {
+                "The cat facts are currently napping."
+            }
+        } catch (e: Exception) {
+            "The cat facts are currently napping."
         }
     }
 }
@@ -27,4 +40,9 @@ data class JokeResponse(
     val icon_url: String? = null,
     val id: String? = null,
     val url: String? = null
+)
+
+data class CatFactResponse(
+    val fact: String,
+    val length: Int? = null
 )

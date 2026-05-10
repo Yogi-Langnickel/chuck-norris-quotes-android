@@ -1,9 +1,11 @@
-Welcome to the Chuck Norris Quotes app! This application fetches random Chuck Norris quotes from the Chuck Norris API and displays them in a user-friendly interface.
+Welcome to the Chuck Norris Quotes app! This application fetches random Chuck Norris quotes from the Chuck Norris API and random cat facts from catfact.ninja, then displays them in a user-friendly interface.
 
 With a clean and modern design, the app utilizes Jetpack Compose for a responsive UI and follows the MVVM architecture for maintainability and scalability.
 
 Key Features:
 - Fetch random Chuck Norris quotes with a simple tap.
+- Fetch random cat facts with a simple tap.
+- Copy or share the current quote or fact.
 - Beautifully designed UI using Jetpack Compose.
 - Built with Kotlin for a seamless Android experience.
 
