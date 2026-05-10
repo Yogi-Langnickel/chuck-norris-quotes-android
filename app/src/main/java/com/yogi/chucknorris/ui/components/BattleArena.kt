@@ -301,7 +301,7 @@ private fun BattleContenderCard(
     }
 
     val scale by animateFloatAsState(
-        targetValue = if (isWinner) 1.02f else 1f,
+        targetValue = if (isWinner) 1.01f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness = Spring.StiffnessMediumLow
@@ -365,8 +365,7 @@ private fun BattleContenderCard(
                         (entryOffset.value * size.width * 1.2f) +
                         (loserExitDirection * loserSwipeProgress * size.width * 1.2f)
                     alpha = (1f - loserSwipeProgress).coerceAtLeast(0.12f)
-                    rotationZ = (dragOffset / size.width * 4f) +
-                        loserExitDirection * loserSwipeProgress * 5f
+                    rotationZ = 0f
                 },
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(
