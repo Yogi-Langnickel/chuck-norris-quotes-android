@@ -3,6 +3,7 @@ package com.yogi.chucknorris.data.repository
 import com.yogi.chucknorris.data.service.FactService
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -59,8 +60,48 @@ class QuoteRepositoryTest {
         assertTrue(round.cat.powerProfile.score in 25..100)
     }
 
-    private fun fakeFactService(joke: String, catFact: String) = object : FactService {
-        override suspend fun getRandomJoke() = joke
-        override suspend fun getRandomCatFact() = catFact
+    @Test
+    fun getRandomQuote_propagatesApiFailures() {
+        val repository = QuoteRepository(
+            fakeFactService(
+                jokeError = RuntimeException("Chuck API failed"),
+                catFact = "Cats have excellent night vision."
+            )
+        )
+
+        assertThrows(RuntimeException::class.java) {
+            runBlocking { repository.getRandomQuote() }
+        }
+    }
+
+    @Test
+    fun getRandomCatFact_propagatesApiFailures() {
+        val repository = QuoteRepository(
+            fakeFactService(
+                joke = "Chuck Norris can divide by zero.",
+                catFactError = RuntimeException("Cat API failed")
+            )
+        )
+
+        assertThrows(RuntimeException::class.java) {
+            runBlocking { repository.getRandomCatFact() }
+        }
+    }
+
+    private fun fakeFactService(
+        joke: String = "Chuck Norris can divide by zero.",
+        jokeError: RuntimeException? = null,
+        catFact: String = "Cats have excellent night vision.",
+        catFactError: RuntimeException? = null
+    ) = object : FactService {
+        override suspend fun getRandomJoke(): String {
+            jokeError?.let { throw it }
+            return joke
+        }
+
+        override suspend fun getRandomCatFact(): String {
+            catFactError?.let { throw it }
+            return catFact
+        }
     }
 }

@@ -7,19 +7,34 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.yogi.chucknorris.data.local.BattleScoreStore
 import com.yogi.chucknorris.data.model.Quote
+import com.yogi.chucknorris.data.repository.QuoteDataSource
 import com.yogi.chucknorris.data.repository.QuoteRepository
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+sealed interface QuoteUiState {
+    data object Loading : QuoteUiState
+    data class Success(val quote: Quote) : QuoteUiState
+    data class Error(val request: QuoteRequest) : QuoteUiState
+}
+
+enum class QuoteRequest {
+    CHUCK_QUOTE,
+    CAT_FACT,
+    BATTLE_ROUND
+}
+
 class QuoteViewModel(
-    private val quoteRepository: QuoteRepository,
+    private val quoteRepository: QuoteDataSource,
     private val battleScoreStore: BattleScoreStore
 ) : ViewModel() {
 
-    private val _quote = MutableLiveData<Quote>()
-    val quote: LiveData<Quote> get() = _quote
+    private val _quoteUiState = MutableLiveData<QuoteUiState>(QuoteUiState.Loading)
+    val quoteUiState: LiveData<QuoteUiState> get() = _quoteUiState
 
     private val _battleRound = MutableLiveData<BattleRound>()
     val battleRound: LiveData<BattleRound> get() = _battleRound
@@ -33,45 +48,68 @@ class QuoteViewModel(
     private val _isBattleLoading = MutableLiveData(false)
     val isBattleLoading: LiveData<Boolean> get() = _isBattleLoading
 
+    private var activeQuoteRequest: Job? = null
+
     fun fetchRandomQuote() {
-        viewModelScope.launch {
+        activeQuoteRequest?.cancel()
+        activeQuoteRequest = viewModelScope.launch {
+            _quoteUiState.value = QuoteUiState.Loading
             try {
                 val fetchedQuote = quoteRepository.getRandomQuote()
-                _quote.value = fetchedQuote
+                _quoteUiState.value = QuoteUiState.Success(fetchedQuote)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Handle network errors here
+                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.CHUCK_QUOTE)
             }
         }
     }
 
     fun fetchRandomCatFact() {
-        viewModelScope.launch {
+        activeQuoteRequest?.cancel()
+        activeQuoteRequest = viewModelScope.launch {
+            _quoteUiState.value = QuoteUiState.Loading
             try {
                 val fetchedQuote = quoteRepository.getRandomCatFact()
-                _quote.value = fetchedQuote
+                _quoteUiState.value = QuoteUiState.Success(fetchedQuote)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Handle network errors here
+                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.CAT_FACT)
             }
         }
     }
 
     fun fetchBattleRound() {
-        viewModelScope.launch {
+        activeQuoteRequest?.cancel()
+        activeQuoteRequest = viewModelScope.launch {
             _isBattleLoading.value = true
+            _quoteUiState.value = QuoteUiState.Loading
             try {
                 val round = quoteRepository.getBattleRound()
                 _battleRound.value = round
-                _quote.value = if (round.chuck.powerProfile.score >= round.cat.powerProfile.score) {
+                val featuredQuote = if (round.chuck.powerProfile.score >= round.cat.powerProfile.score) {
                     round.chuck.quote
                 } else {
                     round.cat.quote
                 }
+                _quoteUiState.value = QuoteUiState.Success(featuredQuote)
                 _battleScores.value = battleScoreStore.recordBattle(round.winner)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // Handle network errors here
+                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.BATTLE_ROUND)
             } finally {
                 _isBattleLoading.value = false
             }
+        }
+    }
+
+    fun retryQuoteLoad(request: QuoteRequest) {
+        when (request) {
+            QuoteRequest.CHUCK_QUOTE -> fetchRandomQuote()
+            QuoteRequest.CAT_FACT -> fetchRandomCatFact()
+            QuoteRequest.BATTLE_ROUND -> fetchBattleRound()
         }
     }
 

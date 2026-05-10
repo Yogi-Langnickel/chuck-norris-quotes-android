@@ -52,6 +52,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 - Fetches random Chuck Norris quotes from `api.chucknorris.io`.
 - Fetches random cat facts from `catfact.ninja`.
+- Runs a Chuck vs Cat quote battle with animated contender cards and daily, weekly, and monthly local scores.
 - Shows a local-only fact power profile for the current quote or fact.
 - Supports copying and sharing the current quote or fact.
 - Uses Kotlin and Jetpack Compose.

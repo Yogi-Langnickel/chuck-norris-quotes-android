@@ -5,6 +5,7 @@ With a clean and modern design, the app utilizes Jetpack Compose for a responsiv
 Key Features:
 - Fetch random Chuck Norris quotes with a simple tap.
 - Fetch random cat facts with a simple tap.
+- Start a Chuck vs Cat battle with animated contenders and daily, weekly, and monthly local scores.
 - Copy or share the current quote or fact.
 - Beautifully designed UI using Jetpack Compose.
 - Built with Kotlin for a seamless Android experience.

@@ -7,9 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-class QuoteRepository(private val factService: FactService) {
+class QuoteRepository(private val factService: FactService) : QuoteDataSource {
 
-    suspend fun getRandomQuote(): Quote {
+    override suspend fun getRandomQuote(): Quote {
         return withContext(Dispatchers.IO) {
             val jokeString = factService.getRandomJoke()
             Quote(
@@ -20,7 +20,7 @@ class QuoteRepository(private val factService: FactService) {
         }
     }
 
-    suspend fun getRandomCatFact(): Quote {
+    override suspend fun getRandomCatFact(): Quote {
         return withContext(Dispatchers.IO) {
             val catFact = factService.getRandomCatFact()
             Quote(
@@ -31,7 +31,7 @@ class QuoteRepository(private val factService: FactService) {
         }
     }
 
-    suspend fun getBattleRound(): BattleRound {
+    override suspend fun getBattleRound(): BattleRound {
         return withContext(Dispatchers.IO) {
             val chuckQuote = Quote(
                 id = UUID.randomUUID().toString(),

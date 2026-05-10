@@ -7,6 +7,7 @@
     <string name="copy_quote">Copy quote</string>
     <string name="share_quote">Share quote</string>
     <string name="quote_copied">Quote copied to clipboard</string>
+    <string name="share_unavailable">No app is available to share this quote.</string>
     <string name="share_chooser_title">Share quote</string>
     <string name="close_app">Close app</string>
     <string name="quote_power_badge">%1$s / %2$s</string>
@@ -30,4 +31,8 @@
     <string name="battle_result_draw">Draw. The universe refuses to choose.</string>
     <string name="loading">Loading...</string>
     <string name="error_message">Error fetching quote. Please try again.</string>
+    <string name="quote_error_chuck">Chuck Norris quotes are unavailable right now.</string>
+    <string name="quote_error_cat">Cat facts are unavailable right now.</string>
+    <string name="quote_error_battle">The quote battle could not load right now.</string>
+    <string name="retry">Retry</string>
 </resources>
