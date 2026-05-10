@@ -41,6 +41,24 @@ class QuoteBattleTest {
     }
 
     @Test
+    fun battleScore_reportsCurrentLeaderAndMargin() {
+        assertEquals(BattleWinner.DRAW, BattleScore().leader)
+        assertEquals(0, BattleScore().leaderMargin)
+
+        val chuckLead = BattleScore(chuckWins = 4, catWins = 1, draws = 2)
+        assertEquals(BattleWinner.CHUCK, chuckLead.leader)
+        assertEquals(3, chuckLead.leaderMargin)
+
+        val catLead = BattleScore(chuckWins = 2, catWins = 5)
+        assertEquals(BattleWinner.CAT, catLead.leader)
+        assertEquals(3, catLead.leaderMargin)
+
+        val tied = BattleScore(chuckWins = 2, catWins = 2, draws = 1)
+        assertEquals(BattleWinner.DRAW, tied.leader)
+        assertEquals(0, tied.leaderMargin)
+    }
+
+    @Test
     fun battleRoundFrom_keepsScoresInsidePowerProfileRange() {
         val round = BattleRound.from(
             Quote("chuck", "Chuck Norris can slam a revolving door.", "Chuck Norris"),

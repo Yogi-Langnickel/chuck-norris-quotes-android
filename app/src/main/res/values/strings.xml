@@ -16,12 +16,17 @@
     <string name="battle_title">Chuck vs Cat</string>
     <string name="battle_subtitle">Quote Battle</string>
     <string name="start_battle">Battle</string>
+    <string name="rematch_battle">Rematch</string>
     <string name="period_daily">Daily</string>
     <string name="period_weekly">Weekly</string>
     <string name="period_monthly">Monthly</string>
     <string name="chuck_score">Chuck</string>
     <string name="cat_score">Cat</string>
     <string name="draw_score">Draws</string>
+    <string name="battle_leader_empty">No winner for this period yet.</string>
+    <string name="battle_leader_chuck">Chuck leads this period by %1$d.</string>
+    <string name="battle_leader_cat">Cat leads this period by %1$d.</string>
+    <string name="battle_leader_draw">This period is tied.</string>
     <string name="battle_empty">Start a round to compare a Chuck Norris quote against a cat fact.</string>
     <string name="chuck_contender">Chuck</string>
     <string name="cat_contender">Cat</string>

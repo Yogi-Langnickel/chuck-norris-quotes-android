@@ -51,6 +51,13 @@ data class BattleScore(
     val draws: Int = 0
 ) {
     val totalBattles: Int = chuckWins + catWins + draws
+    val leader: BattleWinner
+        get() = when {
+            chuckWins > catWins -> BattleWinner.CHUCK
+            catWins > chuckWins -> BattleWinner.CAT
+            else -> BattleWinner.DRAW
+        }
+    val leaderMargin: Int = kotlin.math.abs(chuckWins - catWins)
 
     fun record(winner: BattleWinner): BattleScore {
         return when (winner) {
