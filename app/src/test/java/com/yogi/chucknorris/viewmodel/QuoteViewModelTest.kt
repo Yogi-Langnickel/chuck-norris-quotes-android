@@ -189,6 +189,31 @@ class QuoteViewModelTest {
     }
 
     @Test
+    fun continueBattleWithSelectedWinner_refreshesOnlyLoserSide() = runTest {
+        val firstRound = BattleRound.from(
+            Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris"),
+            Quote("cat-1", "Cats can rotate their ears.", "Cat Fact")
+        )
+        val nextCatFact = Quote("cat-2", "Cats have excellent night vision.", "Cat Fact")
+        val dataSource = FakeQuoteDataSource(
+            catFactResult = Result.success(nextCatFact),
+            battleRoundResult = Result.success(firstRound)
+        )
+        val viewModel = QuoteViewModel(dataSource, FakeBattleScoreStore())
+
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.chooseBattleWinner(BattleWinner.CHUCK)
+        viewModel.continueBattleWithSelectedWinner()
+        advanceUntilIdle()
+
+        val nextRound = viewModel.battleRound.value
+        assertEquals(firstRound.chuck.quote, nextRound?.chuck?.quote)
+        assertEquals(nextCatFact, nextRound?.cat?.quote)
+        assertEquals(null, viewModel.selectedBattleWinner.value)
+    }
+
+    @Test
     fun newerQuoteRequestWinsWhenPreviousRequestIsStillRunning() = runTest {
         val slowQuote = CompletableDeferred<Quote>()
         val catFact = Quote("cat-1", "Cats have excellent night vision.", "Cat Fact")

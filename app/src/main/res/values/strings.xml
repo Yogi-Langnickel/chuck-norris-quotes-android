@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Chuck Norris Quotes</string>
-    <string name="app_tagline">Random facts with power ratings</string>
+    <string name="app_tagline">Battle picks and random facts</string>
     <string name="fetch_quote_button">Fetch a New Quote</string>
     <string name="get_new_quote">New Quote</string>
     <string name="get_cat_fact">Cat Fact</string>
@@ -9,12 +9,18 @@
     <string name="quote_copied">Quote copied to clipboard</string>
     <string name="share_unavailable">No app is available to share this quote.</string>
     <string name="share_chooser_title">Share quote</string>
+    <string name="update_unavailable">No browser is available to open the latest release.</string>
+    <string name="open_latest_release">Open latest release</string>
+    <string name="latest_release_url">https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest</string>
     <string name="close_app">Close app</string>
     <string name="quote_power_badge">%1$s / %2$s</string>
     <string name="fact_power">Fact power</string>
     <string name="quote_power_detail">%1$s %2$d words scanned.</string>
     <string name="battle_title">Chuck vs Cat</string>
     <string name="battle_subtitle">Quote Battle</string>
+    <string name="tab_battle_mode">Battle Mode</string>
+    <string name="tab_chuck_facts">Chuck Facts</string>
+    <string name="tab_cat_facts">Cat Facts</string>
     <string name="start_battle">Battle</string>
     <string name="rematch_battle">Rematch</string>
     <string name="period_daily">Daily</string>
@@ -23,6 +29,7 @@
     <string name="chuck_score">Chuck</string>
     <string name="cat_score">Cat</string>
     <string name="draw_score">Draws</string>
+    <string name="personal_score_heading">Your %1$s picks</string>
     <string name="battle_leader_empty">No winner for this period yet.</string>
     <string name="battle_leader_chuck">Chuck leads this period by %1$d.</string>
     <string name="battle_leader_cat">Cat leads this period by %1$d.</string>
@@ -32,10 +39,11 @@
     <string name="cat_contender">Cat</string>
     <string name="choose_chuck_winner">Choose Chuck</string>
     <string name="choose_cat_winner">Choose Cat</string>
+    <string name="winner_selected">Winner selected</string>
     <string name="battle_power_value">%1$d</string>
     <string name="battle_choice_pending">Choose your favourite winner to record this round.</string>
-    <string name="battle_choice_chuck">You chose Chuck. Score recorded.</string>
-    <string name="battle_choice_cat">You chose Cat. Score recorded.</string>
+    <string name="battle_choice_chuck">You chose Chuck. Cat swipes out for a new challenger.</string>
+    <string name="battle_choice_cat">You chose Cat. Chuck swipes out for a new challenger.</string>
     <string name="battle_result_chuck">Power stat: Chuck edges Cat by %1$d.</string>
     <string name="battle_result_cat">Power stat: Cat edges Chuck by %1$d.</string>
     <string name="battle_result_draw">Power stat: even match.</string>
@@ -45,4 +53,7 @@
     <string name="quote_error_cat">Cat facts are unavailable right now.</string>
     <string name="quote_error_battle">The quote battle could not load right now.</string>
     <string name="retry">Retry</string>
+    <string name="refresh_fact">Refresh</string>
+    <string name="next_matchup">Next matchup</string>
+    <string name="tie_break_refresh_both">Tie break: refresh both</string>
 </resources>

@@ -1,18 +1,20 @@
 package com.yogi.chucknorris.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,14 +26,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +47,7 @@ import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
 import com.yogi.chucknorris.domain.BattleWinner
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -54,9 +59,17 @@ fun BattleArena(
     isLoading: Boolean,
     onPeriodSelected: (BattlePeriod) -> Unit,
     onWinnerSelected: (BattleWinner) -> Unit,
-    onBattleClick: () -> Unit
+    onLoserSwipedAway: () -> Unit,
+    onRefreshBoth: () -> Unit
 ) {
     val score = battleScores[selectedPeriod] ?: BattleScore()
+
+    LaunchedEffect(battleRound?.chuck?.quote?.id, battleRound?.cat?.quote?.id, selectedWinner) {
+        if (selectedWinner == BattleWinner.CHUCK || selectedWinner == BattleWinner.CAT) {
+            delay(720)
+            onLoserSwipedAway()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -82,7 +95,7 @@ fun BattleArena(
                 )
             }
             Button(
-                onClick = onBattleClick,
+                onClick = onRefreshBoth,
                 enabled = !isLoading
             ) {
                 androidx.compose.material3.Icon(
@@ -117,7 +130,7 @@ fun BattleArena(
             }
         }
 
-        ScoreStrip(score = score)
+        ScoreStrip(period = selectedPeriod, score = score)
         PeriodLeaderBanner(score = score)
 
         if (battleRound == null) {
@@ -127,6 +140,8 @@ fun BattleArena(
                 label = stringResource(R.string.chuck_contender),
                 contender = battleRound.chuck,
                 isWinner = selectedWinner == BattleWinner.CHUCK,
+                isLoser = selectedWinner == BattleWinner.CAT,
+                swipeDirection = -1f,
                 canSelect = selectedWinner == null && !isLoading,
                 actionLabel = stringResource(R.string.choose_chuck_winner),
                 onSelect = { onWinnerSelected(BattleWinner.CHUCK) }
@@ -135,19 +150,19 @@ fun BattleArena(
                 label = stringResource(R.string.cat_contender),
                 contender = battleRound.cat,
                 isWinner = selectedWinner == BattleWinner.CAT,
+                isLoser = selectedWinner == BattleWinner.CHUCK,
+                swipeDirection = 1f,
                 canSelect = selectedWinner == null && !isLoading,
                 actionLabel = stringResource(R.string.choose_cat_winner),
                 onSelect = { onWinnerSelected(BattleWinner.CAT) }
             )
             BattleChoiceStatus(selectedWinner = selectedWinner)
-            Text(
-                text = battleRound.powerResultText(),
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.SemiBold
-            )
+            AnimatedVisibility(visible = selectedWinner != null) {
+                PostSelectionControls(
+                    isLoading = isLoading,
+                    onRefreshBoth = onRefreshBoth
+                )
+            }
         }
     }
 }
@@ -155,10 +170,10 @@ fun BattleArena(
 @Composable
 private fun BattleChoiceStatus(selectedWinner: BattleWinner?) {
     val message = when (selectedWinner) {
-        BattleWinner.CHUCK -> stringResource(R.string.battle_choice_chuck)
-        BattleWinner.CAT -> stringResource(R.string.battle_choice_cat)
-        BattleWinner.DRAW, null -> stringResource(R.string.battle_choice_pending)
-    }
+            BattleWinner.CHUCK -> stringResource(R.string.battle_choice_chuck)
+            BattleWinner.CAT -> stringResource(R.string.battle_choice_cat)
+            BattleWinner.DRAW, null -> stringResource(R.string.battle_choice_pending)
+        }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -203,7 +218,13 @@ private fun PeriodLeaderBanner(score: BattleScore) {
 }
 
 @Composable
-private fun ScoreStrip(score: BattleScore) {
+private fun ScoreStrip(period: BattlePeriod, score: BattleScore) {
+    Text(
+        text = stringResource(R.string.personal_score_heading, period.label()),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontWeight = FontWeight.SemiBold
+    )
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -218,11 +239,20 @@ private fun ScoreStrip(score: BattleScore) {
             value = score.catWins,
             modifier = Modifier.weight(1f)
         )
-        ScorePill(
-            label = stringResource(R.string.draw_score),
-            value = score.draws,
-            modifier = Modifier.weight(1f)
-        )
+    }
+}
+
+@Composable
+private fun PostSelectionControls(
+    isLoading: Boolean,
+    onRefreshBoth: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onRefreshBoth,
+        enabled = !isLoading,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(stringResource(R.string.tie_break_refresh_both))
     }
 }
 
@@ -280,113 +310,141 @@ private fun BattleContenderCard(
     label: String,
     contender: BattleContender,
     isWinner: Boolean,
+    isLoser: Boolean,
+    swipeDirection: Float,
     canSelect: Boolean,
     actionLabel: String,
     onSelect: () -> Unit
 ) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = contender.powerProfile.progress,
-        animationSpec = tween(durationMillis = 700),
-        label = "battleProgress"
-    )
     val scale by animateFloatAsState(
         targetValue = if (isWinner) 1.02f else 1f,
         animationSpec = tween(durationMillis = 450),
         label = "battleScale"
     )
+    val celebrationProgress by animateFloatAsState(
+        targetValue = if (isWinner) 1f else 0f,
+        animationSpec = tween(durationMillis = 850),
+        label = "winnerCelebration"
+    )
+    val loserSwipeProgress by animateFloatAsState(
+        targetValue = if (isLoser) 1f else 0f,
+        animationSpec = tween(durationMillis = 650),
+        label = "loserSwipe"
+    )
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isWinner) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            }
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+    Box(modifier = Modifier.fillMaxWidth()) {
+        WinnerCelebration(progress = celebrationProgress)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = swipeDirection * loserSwipeProgress * size.width * 1.2f
+                    alpha = (1f - loserSwipeProgress).coerceAtLeast(0.12f)
+                    rotationZ = swipeDirection * loserSwipeProgress * 5f
+                },
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isWinner) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHigh
+                }
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.primary
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .padding(6.dp),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.primary
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label.take(2).uppercase(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        Column {
                             Text(
-                                text = label.take(2).uppercase(),
-                                style = MaterialTheme.typography.labelMedium,
+                                text = label,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
-                    Column {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = contender.quote.sourceLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
+
                 Text(
-                    text = stringResource(R.string.battle_power_value, contender.powerProfile.score),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    text = contender.quote.value,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            }
 
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(12.dp),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-
-            Text(
-                text = contender.quote.value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Button(
-                onClick = onSelect,
-                enabled = canSelect,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(actionLabel)
+                Button(
+                    onClick = onSelect,
+                    enabled = canSelect,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (isWinner) {
+                            stringResource(R.string.winner_selected)
+                        } else {
+                            actionLabel
+                        }
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun BoxScope.WinnerCelebration(progress: Float) {
+    if (progress <= 0f) return
+
+    val celebrationColor = MaterialTheme.colorScheme.tertiary
+    Canvas(modifier = Modifier.matchParentSize()) {
+        val alpha = (1f - progress).coerceIn(0f, 0.55f)
+        val center = Offset(size.width / 2f, size.height / 2f)
+        repeat(10) { index ->
+            val angle = (index / 10f) * (Math.PI * 2).toFloat()
+            val distance = progress * size.minDimension * 0.42f
+            val offset = Offset(
+                x = center.x + kotlin.math.cos(angle) * distance,
+                y = center.y + kotlin.math.sin(angle) * distance
+            )
+            drawCircle(
+                color = celebrationColor.copy(alpha = alpha),
+                radius = 8.dp.toPx() * (1f - progress * 0.45f),
+                center = offset
+            )
+        }
+        drawCircle(
+            color = celebrationColor.copy(alpha = alpha * 0.45f),
+            radius = progress * size.minDimension * 0.48f,
+            center = center
+        )
     }
 }
 
@@ -409,14 +467,5 @@ private fun BattleScore.periodLeaderText(): String {
         BattleWinner.CHUCK -> stringResource(R.string.battle_leader_chuck, leaderMargin)
         BattleWinner.CAT -> stringResource(R.string.battle_leader_cat, leaderMargin)
         BattleWinner.DRAW -> stringResource(R.string.battle_leader_draw)
-    }
-}
-
-@Composable
-private fun BattleRound.powerResultText(): String {
-    return when (winner) {
-        BattleWinner.CHUCK -> stringResource(R.string.battle_result_chuck, margin)
-        BattleWinner.CAT -> stringResource(R.string.battle_result_cat, margin)
-        BattleWinner.DRAW -> stringResource(R.string.battle_result_draw)
     }
 }
