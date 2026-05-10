@@ -115,7 +115,7 @@ class QuoteViewModelTest {
     }
 
     @Test
-    fun fetchBattleRound_featuresWinnerAndRecordsScore() = runTest {
+    fun fetchBattleRound_featuresPowerLeaderWithoutRecordingScore() = runTest {
         val chuckQuote = Quote("chuck-1", "Chuck Norris can slam a revolving door.", "Chuck Norris")
         val catFact = Quote("cat-1", "Cats sleep for many hours each day.", "Cat Fact")
         val round = BattleRound.from(chuckQuote, catFact)
@@ -135,7 +135,57 @@ class QuoteViewModelTest {
         }
         assertEquals(QuoteUiState.Success(expectedFeaturedQuote), viewModel.quoteUiState.value)
         assertEquals(round, viewModel.battleRound.value)
-        assertEquals(round.winner, scoreStore.recordedWinner)
+        assertEquals(null, viewModel.selectedBattleWinner.value)
+        assertEquals(emptyList<BattleWinner>(), scoreStore.recordedWinners)
+    }
+
+    @Test
+    fun chooseBattleWinner_recordsSelectedWinnerOnce() = runTest {
+        val round = BattleRound.from(
+            Quote("chuck-1", "Chuck Norris can slam a revolving door.", "Chuck Norris"),
+            Quote("cat-1", "Cats sleep for many hours each day.", "Cat Fact")
+        )
+        val scoreStore = FakeBattleScoreStore()
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(battleRoundResult = Result.success(round)),
+            scoreStore
+        )
+
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.chooseBattleWinner(BattleWinner.CAT)
+        viewModel.chooseBattleWinner(BattleWinner.CHUCK)
+
+        assertEquals(BattleWinner.CAT, viewModel.selectedBattleWinner.value)
+        assertEquals(QuoteUiState.Success(round.cat.quote), viewModel.quoteUiState.value)
+        assertEquals(listOf(BattleWinner.CAT), scoreStore.recordedWinners)
+        assertEquals(1, viewModel.battleScores.value?.get(BattlePeriod.DAILY)?.catWins)
+    }
+
+    @Test
+    fun chooseBattleWinner_afterNewRoundRecordsAgain() = runTest {
+        val firstRound = BattleRound.from(
+            Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris"),
+            Quote("cat-1", "Cats can rotate their ears.", "Cat Fact")
+        )
+        val secondRound = BattleRound.from(
+            Quote("chuck-2", "Chuck Norris counted to infinity. Twice.", "Chuck Norris"),
+            Quote("cat-2", "Cats sleep for many hours each day.", "Cat Fact")
+        )
+        val dataSource = FakeQuoteDataSource(battleRoundResult = Result.success(firstRound))
+        val scoreStore = FakeBattleScoreStore()
+        val viewModel = QuoteViewModel(dataSource, scoreStore)
+
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.chooseBattleWinner(BattleWinner.CHUCK)
+        dataSource.battleRoundResult = Result.success(secondRound)
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.chooseBattleWinner(BattleWinner.CAT)
+
+        assertEquals(listOf(BattleWinner.CHUCK, BattleWinner.CAT), scoreStore.recordedWinners)
+        assertEquals(BattleWinner.CAT, viewModel.selectedBattleWinner.value)
     }
 
     @Test
@@ -213,17 +263,21 @@ class QuoteViewModelTest {
     }
 
     private class FakeBattleScoreStore : BattleScoreStore {
-        var recordedWinner: BattleWinner? = null
+        val recordedWinners = mutableListOf<BattleWinner>()
+        private var scores = BattlePeriod.entries.associateWith { BattleScore() }
 
-        override fun getScore(period: BattlePeriod): BattleScore = BattleScore()
+        override fun getScore(period: BattlePeriod): BattleScore = scores.getValue(period)
 
         override fun getScores(): Map<BattlePeriod, BattleScore> {
-            return BattlePeriod.entries.associateWith { BattleScore() }
+            return scores
         }
 
         override fun recordBattle(winner: BattleWinner): Map<BattlePeriod, BattleScore> {
-            recordedWinner = winner
-            return BattlePeriod.entries.associateWith { BattleScore().record(winner) }
+            recordedWinners += winner
+            scores = BattlePeriod.entries.associateWith { period ->
+                scores.getValue(period).record(winner)
+            }
+            return scores
         }
     }
 }
