@@ -44,7 +44,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +60,7 @@ import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
 import com.yogi.chucknorris.domain.BattleWinner
+import com.yogi.chucknorris.domain.FactSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -79,7 +84,7 @@ fun BattleArena(
 
     LaunchedEffect(battleRound?.first?.quote?.id, battleRound?.second?.quote?.id, selectedWinner) {
         if (selectedWinner != null && selectedWinner != BattleWinner.DRAW) {
-            delay(720)
+            delay(1_800)
             onLoserSwipedAway()
         }
     }
@@ -128,6 +133,12 @@ fun BattleArena(
         if (battleRound == null) {
             EmptyBattleState()
         } else {
+            selectedWinner
+                ?.takeIf { it != BattleWinner.DRAW }
+                ?.let(battleRound::contenderFor)
+                ?.let { winningContender ->
+                    VictoryBanner(source = winningContender.source)
+                }
             BattleContenderCard(
                 contender = battleRound.first,
                 isWinner = selectedWinner == battleRound.first.source.winner,
@@ -266,6 +277,92 @@ private fun EmptyBattleState() {
 }
 
 @Composable
+private fun VictoryBanner(source: FactSource) {
+    var animationTarget by remember(source) { mutableFloatStateOf(0f) }
+    val progress by animateFloatAsState(
+        targetValue = animationTarget,
+        animationSpec = tween(durationMillis = 1_000, easing = FastOutSlowInEasing),
+        label = "victoryBanner"
+    )
+    LaunchedEffect(source) {
+        animationTarget = 1f
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 3.dp,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            VictoryBadge(source = source, progress = progress)
+            Text(
+                text = stringResource(R.string.victory_message, source.scoreLabel),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun VictoryBadge(source: FactSource, progress: Float) {
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val surface = MaterialTheme.colorScheme.surface
+    val ink = MaterialTheme.colorScheme.onSurface
+    val accent = when (source) {
+        FactSource.CHUCK -> primary
+        FactSource.CAT -> tertiary
+        FactSource.DOG -> secondary
+    }
+
+    Canvas(modifier = Modifier.size(64.dp)) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val bounce = kotlin.math.sin(progress * Math.PI).toFloat()
+        val radius = size.minDimension * (0.25f + 0.06f * bounce)
+        val burstAlpha = (1f - progress * 0.2f).coerceIn(0f, 0.8f)
+
+        repeat(10) { index ->
+            val angle = (index / 10f) * (Math.PI * 2).toFloat()
+            val startDistance = size.minDimension * 0.22f
+            val endDistance = size.minDimension * (0.28f + progress * 0.16f)
+            val start = Offset(
+                x = center.x + kotlin.math.cos(angle) * startDistance,
+                y = center.y + kotlin.math.sin(angle) * startDistance
+            )
+            val end = Offset(
+                x = center.x + kotlin.math.cos(angle) * endDistance,
+                y = center.y + kotlin.math.sin(angle) * endDistance
+            )
+            drawLine(
+                color = listOf(primary, secondary, tertiary)[index % 3].copy(alpha = burstAlpha),
+                start = start,
+                end = end,
+                strokeWidth = 2.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
+
+        drawCircle(accent.copy(alpha = 0.24f), radius * 1.7f, center)
+        drawCircle(accent, radius * 1.16f, center)
+        drawCircle(surface, radius, center)
+
+        when (source) {
+            FactSource.CHUCK -> drawChuckCelebration(center, radius, ink, accent)
+            FactSource.CAT -> drawCatCelebration(center, radius, ink, accent)
+            FactSource.DOG -> drawDogCelebration(center, radius, ink, accent)
+        }
+    }
+}
+
+@Composable
 private fun BattleContenderCard(
     contender: BattleContender,
     isWinner: Boolean,
@@ -308,10 +405,10 @@ private fun BattleContenderCard(
         ),
         label = "battleScale"
     )
-    val celebrationProgress by animateFloatAsState(
+    val victoryProgress by animateFloatAsState(
         targetValue = if (isWinner) 1f else 0f,
-        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-        label = "winnerCelebration"
+        animationSpec = tween(durationMillis = 1_000, easing = FastOutSlowInEasing),
+        label = "victoryAnimation"
     )
     val loserSwipeProgress by animateFloatAsState(
         targetValue = if (isLoser) 1f else 0f,
@@ -330,7 +427,6 @@ private fun BattleContenderCard(
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        WinnerCelebration(progress = celebrationProgress)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -425,36 +521,182 @@ private fun BattleContenderCard(
                 )
             }
         }
+        WinnerCelebration(
+            source = contender.source,
+            progress = victoryProgress
+        )
     }
 }
 
 @Composable
-private fun BoxScope.WinnerCelebration(progress: Float) {
+private fun BoxScope.WinnerCelebration(source: FactSource, progress: Float) {
     if (progress <= 0f) return
 
-    val celebrationColor = MaterialTheme.colorScheme.tertiary
-    Canvas(modifier = Modifier.matchParentSize()) {
-        val alpha = (1f - progress).coerceIn(0f, 0.55f)
-        val center = Offset(size.width / 2f, size.height / 2f)
-        repeat(10) { index ->
-            val angle = (index / 10f) * (Math.PI * 2).toFloat()
-            val distance = progress * size.minDimension * 0.42f
-            val offset = Offset(
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val surface = MaterialTheme.colorScheme.surface
+    val ink = MaterialTheme.colorScheme.onSurface
+    val accent = when (source) {
+        FactSource.CHUCK -> primary
+        FactSource.CAT -> tertiary
+        FactSource.DOG -> secondary
+    }
+
+    Canvas(
+        modifier = Modifier
+            .matchParentSize()
+            .graphicsLayer { alpha = 0.95f }
+    ) {
+        val burstAlpha = (1f - progress).coerceIn(0f, 0.82f)
+        val center = Offset(size.width - 60.dp.toPx(), 52.dp.toPx())
+        val bounce = kotlin.math.sin(progress * Math.PI).toFloat()
+        val mascotRadius = 26.dp.toPx() * (0.76f + 0.22f * bounce + 0.1f * progress)
+
+        repeat(16) { index ->
+            val angle = (index / 16f) * (Math.PI * 2).toFloat()
+            val distance = progress * size.minDimension * 0.44f
+            val start = Offset(
                 x = center.x + kotlin.math.cos(angle) * distance,
                 y = center.y + kotlin.math.sin(angle) * distance
             )
-            drawCircle(
-                color = celebrationColor.copy(alpha = alpha),
-                radius = 8.dp.toPx() * (1f - progress * 0.45f),
-                center = offset
+            val end = Offset(
+                x = start.x + kotlin.math.cos(angle) * 13.dp.toPx(),
+                y = start.y + kotlin.math.sin(angle) * 13.dp.toPx()
+            )
+            val color = when (index % 3) {
+                0 -> primary
+                1 -> secondary
+                else -> tertiary
+            }
+            drawLine(
+                color = color.copy(alpha = burstAlpha),
+                start = start,
+                end = end,
+                strokeWidth = 3.dp.toPx(),
+                cap = StrokeCap.Round
             )
         }
+
         drawCircle(
-            color = celebrationColor.copy(alpha = alpha * 0.45f),
-            radius = progress * size.minDimension * 0.48f,
+            color = accent.copy(alpha = 0.25f * (1f - progress * 0.2f)),
+            radius = mascotRadius * (1.45f + 0.28f * bounce),
             center = center
         )
+        drawCircle(
+            color = accent,
+            radius = mascotRadius,
+            center = center
+        )
+        drawCircle(
+            color = surface,
+            radius = mascotRadius * 0.78f,
+            center = center
+        )
+
+        when (source) {
+            FactSource.CHUCK -> drawChuckCelebration(center, mascotRadius, ink, accent)
+            FactSource.CAT -> drawCatCelebration(center, mascotRadius, ink, accent)
+            FactSource.DOG -> drawDogCelebration(center, mascotRadius, ink, accent)
+        }
     }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawChuckCelebration(
+    center: Offset,
+    radius: Float,
+    ink: Color,
+    accent: Color
+) {
+    drawLine(
+        color = ink,
+        start = center.copy(x = center.x - radius * 0.42f, y = center.y - radius * 0.08f),
+        end = center.copy(x = center.x - radius * 0.1f, y = center.y - radius * 0.08f),
+        strokeWidth = 3.dp.toPx(),
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = ink,
+        start = center.copy(x = center.x + radius * 0.1f, y = center.y - radius * 0.08f),
+        end = center.copy(x = center.x + radius * 0.42f, y = center.y - radius * 0.08f),
+        strokeWidth = 3.dp.toPx(),
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = ink,
+        start = center.copy(x = center.x - radius * 0.28f, y = center.y + radius * 0.28f),
+        end = center.copy(x = center.x + radius * 0.28f, y = center.y + radius * 0.28f),
+        strokeWidth = 5.dp.toPx(),
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = accent,
+        start = center.copy(x = center.x - radius * 0.55f, y = center.y - radius * 0.72f),
+        end = center.copy(x = center.x + radius * 0.55f, y = center.y - radius * 0.72f),
+        strokeWidth = 5.dp.toPx(),
+        cap = StrokeCap.Round
+    )
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCatCelebration(
+    center: Offset,
+    radius: Float,
+    ink: Color,
+    accent: Color
+) {
+    val leftEar = Path().apply {
+        moveTo(center.x - radius * 0.55f, center.y - radius * 0.45f)
+        lineTo(center.x - radius * 0.28f, center.y - radius * 1.1f)
+        lineTo(center.x - radius * 0.05f, center.y - radius * 0.5f)
+        close()
+    }
+    val rightEar = Path().apply {
+        moveTo(center.x + radius * 0.55f, center.y - radius * 0.45f)
+        lineTo(center.x + radius * 0.28f, center.y - radius * 1.1f)
+        lineTo(center.x + radius * 0.05f, center.y - radius * 0.5f)
+        close()
+    }
+    drawPath(leftEar, accent)
+    drawPath(rightEar, accent)
+    drawCircle(ink, radius * 0.08f, center.copy(x = center.x - radius * 0.24f, y = center.y - radius * 0.04f))
+    drawCircle(ink, radius * 0.08f, center.copy(x = center.x + radius * 0.24f, y = center.y - radius * 0.04f))
+    drawLine(
+        color = ink,
+        start = center.copy(x = center.x - radius * 0.52f, y = center.y + radius * 0.26f),
+        end = center.copy(x = center.x + radius * 0.52f, y = center.y + radius * 0.26f),
+        strokeWidth = 2.dp.toPx(),
+        cap = StrokeCap.Round
+    )
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDogCelebration(
+    center: Offset,
+    radius: Float,
+    ink: Color,
+    accent: Color
+) {
+    drawCircle(
+        color = accent,
+        radius = radius * 0.33f,
+        center = center.copy(x = center.x - radius * 0.65f, y = center.y - radius * 0.18f)
+    )
+    drawCircle(
+        color = accent,
+        radius = radius * 0.33f,
+        center = center.copy(x = center.x + radius * 0.65f, y = center.y - radius * 0.18f)
+    )
+    drawCircle(ink, radius * 0.08f, center.copy(x = center.x - radius * 0.22f, y = center.y - radius * 0.02f))
+    drawCircle(ink, radius * 0.08f, center.copy(x = center.x + radius * 0.22f, y = center.y - radius * 0.02f))
+    drawCircle(ink, radius * 0.1f, center.copy(x = center.x, y = center.y + radius * 0.2f))
+    drawArc(
+        color = ink,
+        startAngle = 18f,
+        sweepAngle = 144f,
+        useCenter = false,
+        topLeft = center.copy(x = center.x - radius * 0.28f, y = center.y + radius * 0.08f),
+        size = androidx.compose.ui.geometry.Size(radius * 0.56f, radius * 0.38f),
+        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+    )
 }
 
 @Composable

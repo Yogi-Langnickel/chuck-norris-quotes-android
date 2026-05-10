@@ -43,6 +43,7 @@
     <string name="choose_chuck_winner">Choose Chuck</string>
     <string name="choose_cat_winner">Choose Cat</string>
     <string name="winner_selected">Winner selected</string>
+    <string name="victory_message">%1$s wins!</string>
     <string name="battle_power_value">%1$d</string>
     <string name="battle_choice_pending">Choose your favourite winner to record this round.</string>
     <string name="battle_choice_chuck">You chose Chuck. Cat swipes out for a new challenger.</string>

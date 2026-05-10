@@ -17,6 +17,7 @@ Track small follow-ups that should not block the current quote and cat fact feat
 - [x] Smooth battle swipe gestures by preserving accepted drag offset into the loser exit animation and spring-settling rejected swipes.
 - [x] Remove battle card tilt/rotation so accepted swipes slide out cleanly without a brief flip.
 - [x] Add a visible Update app button that opens the latest GitHub release page for manual APK updates.
+- [x] Add source-specific Chuck, Cat, and Dog victory animations on top of the winning battle card.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.
 - [x] Surface Chuck Norris API and Cat Fact API failures as clear retryable error UI instead of treating fallback text as content.
 - [x] Disable or guard copy/share actions while no successful quote or fact is available.
