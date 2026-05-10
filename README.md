@@ -7,7 +7,7 @@ A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, a
 The easiest way to install the app on your own phone is through the latest GitHub release:
 
 1. Open `https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest` on your Android phone.
-2. Download the `chuck-norris-quotes-android-1.3.2-debug.apk` asset.
+2. Download the `chuck-norris-quotes-android-1.3.3-debug.apk` asset.
 3. If Android asks, allow your browser or file manager to install unknown apps.
 4. Open the downloaded APK and confirm installation.
 
@@ -24,7 +24,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 To install a downloaded release asset:
 
 ```bash
-adb install -r chuck-norris-quotes-android-1.3.2-debug.apk
+adb install -r chuck-norris-quotes-android-1.3.3-debug.apk
 ```
 
 ## Build Locally
@@ -34,6 +34,8 @@ Requirements:
 - Android Studio with the Android SDK installed.
 - JDK 24.
 - An Android device or emulator running Android 8.0 or newer.
+
+If VS Code or the Gradle extension reports `Unsupported class file major version 69`, it is running Gradle analysis with Java 25. Configure the IDE/Gradle JVM to JDK 24 until the Android/Kotlin tooling stack is fully Java 25 compatible.
 
 Commands:
 
@@ -59,6 +61,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - Separates Battle Mode, Chuck Facts, Cat Facts, and Dog Facts into dedicated tabs.
 - Limits Chuck, Cat, and Dog refresh streams to 10 requests per minute each.
 - Links to the latest GitHub release from inside the app.
+- Shows a visible Update app button that opens the latest release download page.
 - Shows a local-only fact power profile for the current quote or fact.
 - Supports copying and sharing the current quote or fact.
 - Uses Kotlin and Jetpack Compose.
@@ -71,8 +74,8 @@ The app requests internet access so it can fetch quotes, cat facts, and dog fact
 
 ## Current Release
 
-- Version: `1.3.2`
-- APK SHA-256: `458c21f8676c20fdfc22c56498848f8d9051ab4ffdf55f09a2e5bd8b0ce6df35`
+- Version: `1.3.3`
+- APK SHA-256: `229f30f04fd58a8d1dbbf6d40f976ec13e0892e2dbf9f0e49775371077a4ef76`
 
 ## License
 
