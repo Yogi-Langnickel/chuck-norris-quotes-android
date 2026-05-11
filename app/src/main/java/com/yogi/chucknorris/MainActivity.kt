@@ -43,8 +43,7 @@ class MainActivity : ComponentActivity() {
                     factory = QuoteViewModel.provideFactory(repository, battleScoreStore)
                 )
                 MainScreen(
-                    quoteViewModel = quoteViewModel,
-                    onCloseApp = { finish() }
+                    quoteViewModel = quoteViewModel
                 )
             }
         }

@@ -18,7 +18,7 @@ fun QuoteCard(quote: Quote) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -40,7 +40,7 @@ fun QuoteCard(quote: Quote) {
             }
             Text(
                 text = quote.value,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }

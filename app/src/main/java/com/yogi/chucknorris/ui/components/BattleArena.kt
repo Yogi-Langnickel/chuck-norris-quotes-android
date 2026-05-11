@@ -26,8 +26,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -84,7 +86,7 @@ fun BattleArena(
 
     LaunchedEffect(battleRound?.first?.quote?.id, battleRound?.second?.quote?.id, selectedWinner) {
         if (selectedWinner != null && selectedWinner != BattleWinner.DRAW) {
-            delay(1_800)
+            delay(1_100)
             onLoserSwipedAway()
         }
     }
@@ -131,7 +133,11 @@ fun BattleArena(
         ScoreStrip(period = selectedPeriod, score = score)
 
         if (battleRound == null) {
-            EmptyBattleState()
+            if (isLoading) {
+                BattleLoadingState()
+            } else {
+                EmptyBattleState()
+            }
         } else {
             selectedWinner
                 ?.takeIf { it != BattleWinner.DRAW }
@@ -148,6 +154,11 @@ fun BattleArena(
                 loserExitDirection = loserExitDirection,
                 entryDirection = firstEntryDirection,
                 canSelect = selectedWinner == null && !isLoading,
+                onSelected = {
+                    loserExitDirection = 1f
+                    secondEntryDirection = -1f
+                    onWinnerSelected(battleRound.first.source.winner)
+                },
                 onSwipedAway = { direction ->
                     loserExitDirection = direction
                     firstEntryDirection = -direction
@@ -163,6 +174,11 @@ fun BattleArena(
                 loserExitDirection = loserExitDirection,
                 entryDirection = secondEntryDirection,
                 canSelect = selectedWinner == null && !isLoading,
+                onSelected = {
+                    loserExitDirection = -1f
+                    firstEntryDirection = 1f
+                    onWinnerSelected(battleRound.second.source.winner)
+                },
                 onSwipedAway = { direction ->
                     loserExitDirection = direction
                     secondEntryDirection = -direction
@@ -249,6 +265,32 @@ private fun ScorePill(label: String, value: Int, modifier: Modifier = Modifier) 
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun BattleLoadingState() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(28.dp),
+                strokeWidth = 3.dp
+            )
+            Text(
+                text = stringResource(R.string.loading_battle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -370,6 +412,7 @@ private fun BattleContenderCard(
     loserExitDirection: Float,
     entryDirection: Float?,
     canSelect: Boolean,
+    onSelected: () -> Unit,
     onSwipedAway: (Float) -> Unit
 ) {
     val entryOffset = remember { Animatable(0f) }
@@ -519,6 +562,18 @@ private fun BattleContenderCard(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Button(
+                    onClick = onSelected,
+                    enabled = canSelect,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.choose_contender_winner,
+                            contender.source.scoreLabel
+                        )
+                    )
+                }
             }
         }
         WinnerCelebration(

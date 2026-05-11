@@ -3,13 +3,13 @@ package com.yogi.chucknorris.ui.screens
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -43,8 +43,7 @@ private enum class AppTab {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    quoteViewModel: QuoteViewModel = viewModel(),
-    onCloseApp: () -> Unit
+    quoteViewModel: QuoteViewModel = viewModel()
 ) {
     val quoteUiState by quoteViewModel.quoteUiState.observeAsState(QuoteUiState.Loading)
     val battleRound by quoteViewModel.battleRound.observeAsState()
@@ -103,14 +102,8 @@ fun MainScreen(
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.OpenInNew,
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = stringResource(R.string.open_latest_release)
-                        )
-                    }
-                    IconButton(onClick = { onCloseApp() }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close_app)
                         )
                     }
                 }
@@ -131,7 +124,7 @@ fun MainScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 28.dp)
             ) {
-                TabRow(selectedTabIndex = selectedTab.ordinal) {
+                PrimaryTabRow(selectedTabIndex = selectedTab.ordinal) {
                     AppTab.entries.forEach { tab ->
                         Tab(
                             selected = selectedTab == tab,
@@ -150,29 +143,6 @@ fun MainScreen(
                     }
                 }
 
-                OutlinedButton(
-                    onClick = {
-                        openLatestRelease(
-                            context = context,
-                            latestReleaseUrl = latestReleaseUrl,
-                            onUnavailable = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(updateUnavailableMessage)
-                                }
-                            }
-                        )
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.update_app))
-                }
-
                 when (selectedTab) {
                     AppTab.BATTLE -> {
                         BattleArena(
@@ -186,9 +156,6 @@ fun MainScreen(
                             onLoserSwipedAway = quoteViewModel::continueBattleWithSelectedWinner,
                             onRefreshBoth = quoteViewModel::fetchBattleRound
                         )
-                        if (isBattleLoading && battleRound == null) {
-                            CircularProgressIndicator()
-                        }
                         if (quoteUiState is QuoteUiState.Error &&
                             (quoteUiState as QuoteUiState.Error).request == QuoteRequest.BATTLE_ROUND
                         ) {
@@ -202,6 +169,7 @@ fun MainScreen(
                         quoteUiState = quoteUiState,
                         expectedSourceLabel = "Chuck Norris",
                         isQuoteLoading = isQuoteLoading,
+                        loadingLabel = stringResource(R.string.loading_chuck),
                         onRefresh = quoteViewModel::fetchRandomQuote,
                         onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.CHUCK_QUOTE) },
                         onCopy = { quoteData ->
@@ -225,6 +193,7 @@ fun MainScreen(
                         quoteUiState = quoteUiState,
                         expectedSourceLabel = "Cat Fact",
                         isQuoteLoading = isQuoteLoading,
+                        loadingLabel = stringResource(R.string.loading_cat),
                         onRefresh = quoteViewModel::fetchRandomCatFact,
                         onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.CAT_FACT) },
                         onCopy = { quoteData ->
@@ -248,6 +217,7 @@ fun MainScreen(
                         quoteUiState = quoteUiState,
                         expectedSourceLabel = "Dog Fact",
                         isQuoteLoading = isQuoteLoading,
+                        loadingLabel = stringResource(R.string.loading_dog),
                         onRefresh = quoteViewModel::fetchRandomDogFact,
                         onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.DOG_FACT) },
                         onCopy = { quoteData ->
@@ -278,6 +248,7 @@ private fun FactTabContent(
     quoteUiState: QuoteUiState,
     expectedSourceLabel: String,
     isQuoteLoading: Boolean,
+    loadingLabel: String,
     onRefresh: () -> Unit,
     onRetry: () -> Unit,
     onCopy: (com.yogi.chucknorris.data.model.Quote) -> Unit,
@@ -288,8 +259,10 @@ private fun FactTabContent(
         ?.takeIf { it.sourceLabel == expectedSourceLabel }
 
     when {
-        isQuoteLoading || quoteUiState is QuoteUiState.Loading || currentQuote == null && quoteUiState !is QuoteUiState.Error -> {
-            CircularProgressIndicator()
+        isQuoteLoading ||
+            quoteUiState is QuoteUiState.Loading ||
+            (currentQuote == null && quoteUiState !is QuoteUiState.Error) -> {
+            LoadingState(label = loadingLabel)
         }
         quoteUiState is QuoteUiState.Error -> {
             QuoteErrorCard(request = quoteUiState.request, onRetry = onRetry)
@@ -327,6 +300,32 @@ private fun FactTabContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LoadingState(label: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(28.dp),
+                strokeWidth = 3.dp
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
