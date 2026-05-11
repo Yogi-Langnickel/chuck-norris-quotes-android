@@ -59,6 +59,18 @@ class QuoteBattleTest {
     }
 
     @Test
+    fun battleStreak_tracksRepeatedChampionAndResetsForNewChampion() {
+        val streak = BattleStreak()
+            .record(FactSource.CHUCK)
+            .record(FactSource.CHUCK)
+            .record(FactSource.CAT)
+
+        assertEquals(FactSource.CAT, streak.champion)
+        assertEquals(1, streak.wins)
+        assertTrue(streak.isActive)
+    }
+
+    @Test
     fun battleRoundFrom_keepsScoresInsidePowerProfileRange() {
         val round = BattleRound.from(
             Quote("chuck", "Chuck Norris can slam a revolving door.", "Chuck Norris"),

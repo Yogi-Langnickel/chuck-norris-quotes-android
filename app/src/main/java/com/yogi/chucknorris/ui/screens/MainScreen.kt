@@ -31,6 +31,7 @@ import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleScore
+import com.yogi.chucknorris.domain.BattleStreak
 import com.yogi.chucknorris.ui.components.BattleArena
 
 private enum class AppTab {
@@ -50,6 +51,7 @@ fun MainScreen(
     val selectedWinner by quoteViewModel.selectedBattleWinner.observeAsState()
     val selectedPeriod by quoteViewModel.selectedPeriod.observeAsState(BattlePeriod.DAILY)
     val battleScores by quoteViewModel.battleScores.observeAsState(emptyMap<BattlePeriod, BattleScore>())
+    val battleStreak by quoteViewModel.battleStreak.observeAsState(BattleStreak())
     val isBattleLoading by quoteViewModel.isBattleLoading.observeAsState(false)
     val isQuoteLoading = quoteUiState is QuoteUiState.Loading
     val clipboardManager = LocalClipboardManager.current
@@ -150,6 +152,7 @@ fun MainScreen(
                             selectedWinner = selectedWinner,
                             selectedPeriod = selectedPeriod,
                             battleScores = battleScores,
+                            battleStreak = battleStreak,
                             isLoading = isBattleLoading,
                             onPeriodSelected = quoteViewModel::selectPeriod,
                             onWinnerSelected = quoteViewModel::chooseBattleWinner,

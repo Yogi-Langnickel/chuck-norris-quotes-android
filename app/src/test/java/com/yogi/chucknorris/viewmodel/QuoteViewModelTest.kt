@@ -200,6 +200,34 @@ class QuoteViewModelTest {
         assertEquals(QuoteUiState.Success(round.cat.quote), viewModel.quoteUiState.value)
         assertEquals(listOf(BattleWinner.CAT), scoreStore.recordedWinners)
         assertEquals(1, viewModel.battleScores.value?.get(BattlePeriod.DAILY)?.catWins)
+        assertEquals(FactSource.CAT, viewModel.battleStreak.value?.champion)
+        assertEquals(1, viewModel.battleStreak.value?.wins)
+    }
+
+    @Test
+    fun championStreakIncrementsAcrossContinuedBattles() = runTest {
+        val firstRound = BattleRound.from(
+            Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris"),
+            Quote("cat-1", "Cats can rotate their ears.", "Cat Fact")
+        )
+        val nextCatFact = Quote("cat-2", "Cats have excellent night vision.", "Cat Fact")
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(
+                catFactResult = Result.success(nextCatFact),
+                battleRoundResult = Result.success(firstRound)
+            ),
+            FakeBattleScoreStore()
+        )
+
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.chooseBattleWinner(BattleWinner.CHUCK)
+        viewModel.continueBattleWithSelectedWinner()
+        advanceUntilIdle()
+        viewModel.chooseBattleWinner(BattleWinner.CHUCK)
+
+        assertEquals(FactSource.CHUCK, viewModel.battleStreak.value?.champion)
+        assertEquals(2, viewModel.battleStreak.value?.wins)
     }
 
     @Test
@@ -226,6 +254,8 @@ class QuoteViewModelTest {
 
         assertEquals(listOf(BattleWinner.CHUCK, BattleWinner.CAT), scoreStore.recordedWinners)
         assertEquals(BattleWinner.CAT, viewModel.selectedBattleWinner.value)
+        assertEquals(FactSource.CAT, viewModel.battleStreak.value?.champion)
+        assertEquals(1, viewModel.battleStreak.value?.wins)
     }
 
     @Test

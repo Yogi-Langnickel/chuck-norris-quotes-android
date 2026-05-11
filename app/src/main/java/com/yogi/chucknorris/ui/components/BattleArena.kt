@@ -61,6 +61,7 @@ import com.yogi.chucknorris.domain.BattleContender
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
+import com.yogi.chucknorris.domain.BattleStreak
 import com.yogi.chucknorris.domain.BattleWinner
 import com.yogi.chucknorris.domain.FactSource
 import kotlinx.coroutines.delay
@@ -73,6 +74,7 @@ fun BattleArena(
     selectedWinner: BattleWinner?,
     selectedPeriod: BattlePeriod,
     battleScores: Map<BattlePeriod, BattleScore>,
+    battleStreak: BattleStreak,
     isLoading: Boolean,
     onPeriodSelected: (BattlePeriod) -> Unit,
     onWinnerSelected: (BattleWinner) -> Unit,
@@ -131,6 +133,7 @@ fun BattleArena(
         }
 
         ScoreStrip(period = selectedPeriod, score = score)
+        ChampionStreakBanner(streak = battleStreak)
 
         if (battleRound == null) {
             if (isLoading) {
@@ -188,6 +191,40 @@ fun BattleArena(
             TieBreakButton(
                 isLoading = isLoading || selectedWinner != null,
                 onRefreshBoth = onRefreshBoth
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChampionStreakBanner(streak: BattleStreak) {
+    val champion = streak.champion ?: return
+    if (!streak.isActive) return
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 3.dp,
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.champion_streak_heading),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(
+                    R.string.champion_streak_body,
+                    champion.sourceLabel,
+                    streak.wins
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }

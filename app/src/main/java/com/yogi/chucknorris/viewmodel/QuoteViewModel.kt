@@ -12,6 +12,7 @@ import com.yogi.chucknorris.data.repository.QuoteRepository
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleRound
 import com.yogi.chucknorris.domain.BattleScore
+import com.yogi.chucknorris.domain.BattleStreak
 import com.yogi.chucknorris.domain.BattleWinner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -46,6 +47,9 @@ class QuoteViewModel(
 
     private val _battleScores = MutableLiveData(battleScoreStore.getScores())
     val battleScores: LiveData<Map<BattlePeriod, BattleScore>> get() = _battleScores
+
+    private val _battleStreak = MutableLiveData(BattleStreak())
+    val battleStreak: LiveData<BattleStreak> get() = _battleStreak
 
     private val _selectedPeriod = MutableLiveData(BattlePeriod.DAILY)
     val selectedPeriod: LiveData<BattlePeriod> get() = _selectedPeriod
@@ -110,6 +114,7 @@ class QuoteViewModel(
                 val round = quoteRepository.getBattleRound()
                 _battleRound.value = round
                 _selectedBattleWinner.value = null
+                _battleStreak.value = BattleStreak()
                 recordedBattleRound = null
                 val featuredQuote = round.contenders
                     .maxBy { it.powerProfile.score }
@@ -132,8 +137,9 @@ class QuoteViewModel(
 
         recordedBattleRound = round
         _selectedBattleWinner.value = winner
-        round.contenderFor(winner)?.quote?.let { winningQuote ->
-            _quoteUiState.value = QuoteUiState.Success(winningQuote)
+        round.contenderFor(winner)?.let { winningContender ->
+            _battleStreak.value = (_battleStreak.value ?: BattleStreak()).record(winningContender.source)
+            _quoteUiState.value = QuoteUiState.Success(winningContender.quote)
         }
         _battleScores.value = battleScoreStore.recordBattle(winner)
     }

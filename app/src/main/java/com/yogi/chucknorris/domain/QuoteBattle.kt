@@ -119,3 +119,19 @@ data class BattleScore(
         }
     }
 }
+
+data class BattleStreak(
+    val champion: FactSource? = null,
+    val wins: Int = 0
+) {
+    val isActive: Boolean
+        get() = champion != null && wins > 0
+
+    fun record(winner: FactSource): BattleStreak {
+        return if (champion == winner) {
+            copy(wins = wins + 1)
+        } else {
+            BattleStreak(champion = winner, wins = 1)
+        }
+    }
+}
