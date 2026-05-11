@@ -32,10 +32,10 @@ adb install -r chuck-norris-quotes-android-1.3.4-debug.apk
 Requirements:
 
 - Android Studio with the Android SDK installed.
-- JDK 24.
+- JDK 21.
 - An Android device or emulator running Android 8.0 or newer.
 
-If VS Code or the Gradle extension reports `Unsupported class file major version 69`, it is running Gradle analysis with Java 25. Configure the IDE/Gradle JVM to JDK 24 until the Android/Kotlin tooling stack is fully Java 25 compatible.
+If VS Code or the Gradle extension reports `Unsupported class file major version 69`, it is running Gradle analysis with Java 25. Configure the IDE/Gradle JVM to JDK 21. On this Mac, Homebrew installs it at `/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`.
 
 Commands:
 

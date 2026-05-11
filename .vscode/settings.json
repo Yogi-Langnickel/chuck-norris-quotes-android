@@ -1,0 +1,19 @@
+{
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home",
+      "default": true
+    }
+  ],
+  "java.import.gradle.java.home": "/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home",
+  "cSpell.words": [
+    "androidx",
+    "chucknorris",
+    "gson",
+    "kotlinx",
+    "Ktor",
+    "ktor",
+    "viewmodel"
+  ]
+}
