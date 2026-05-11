@@ -10,6 +10,7 @@ Key Features:
 - Bring in the next challenger from a random non-winner fact stream, with fallback if an API fails.
 - Enjoy smoother battle swipes with spring settling, continuous loser exit motion, and no card tilt.
 - See Chuck, Cat, and Dog celebrate with source-specific victory animations when they win.
+- Follow the current champion streak as one source keeps defending the battle arena.
 - Switch between dedicated Battle Mode, Chuck Facts, Cat Facts, and Dog Facts tabs.
 - Open the latest GitHub release from a visible Update app button for easier manual updates.
 - Copy or share the current quote or fact.

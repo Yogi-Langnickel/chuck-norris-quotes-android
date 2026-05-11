@@ -58,6 +58,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - Runs a battle-first mode where the user swipes away the loser, the winner scores, and a new challenger from another fact stream slides in.
 - Uses spring settling and straight slide-out motion for smoother battle swipes.
 - Shows source-specific Chuck, Cat, and Dog victory animations with confetti when a winner is picked.
+- Highlights the current Battle Mode champion streak as the same source keeps winning.
 - Tracks personal daily, weekly, and monthly winners locally.
 - Separates Battle Mode, Chuck Facts, Cat Facts, and Dog Facts into dedicated tabs.
 - Limits Chuck, Cat, and Dog refresh streams to 10 requests per minute each.

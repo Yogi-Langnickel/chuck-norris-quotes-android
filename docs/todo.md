@@ -28,12 +28,12 @@ Track small follow-ups that should not block the current quote and cat fact feat
 ## Release Hygiene
 
 - [ ] Update `docs/agent-memory.md` after each meaningful app change with the decision, files touched, and checks run.
-- [ ] Keep README and Fastlane metadata aligned whenever a new third-party endpoint or user-visible feature is added.
+- [x] Keep README and Fastlane metadata aligned whenever a new third-party endpoint or user-visible feature is added.
 - [ ] Re-run `./gradlew testDebugUnitTest` and `./gradlew assembleDebug` before publishing another APK.
 
 ## Future Fun Features
 
-- [ ] Develop Quote Battle further as a possible standalone mode/app with a chaos champion streak and richer tournament framing.
+- [x] Develop Quote Battle further as a possible standalone mode/app with a chaos champion streak and richer tournament framing.
 - [ ] Add richer animation polish beyond the current winner celebration and loser swipe-away.
 - [ ] Add a share-card generator that renders the current quote/fact as a themed image card, with themes such as classified file, retro action poster, and cat fact interruption.
 - [ ] Add a lightweight daily challenge around one quote/fact, such as rating the power level, guessing the category, or deciding whether a cat survives the fact.
