@@ -36,7 +36,5 @@ captures/
 *.hprof
 
 # Local agent memory
-AGENTS.md
-GEMINI.MD
 docs/agent-memory.md
 docs/memory/
