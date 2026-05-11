@@ -31,13 +31,15 @@ class QuoteBattleTest {
         val score = BattleScore()
             .record(BattleWinner.CHUCK)
             .record(BattleWinner.CAT)
+            .record(BattleWinner.DOG)
             .record(BattleWinner.DRAW)
             .record(BattleWinner.CHUCK)
 
         assertEquals(2, score.chuckWins)
         assertEquals(1, score.catWins)
+        assertEquals(1, score.dogWins)
         assertEquals(1, score.draws)
-        assertEquals(4, score.totalBattles)
+        assertEquals(5, score.totalBattles)
     }
 
     @Test
@@ -53,7 +55,11 @@ class QuoteBattleTest {
         assertEquals(BattleWinner.CAT, catLead.leader)
         assertEquals(3, catLead.leaderMargin)
 
-        val tied = BattleScore(chuckWins = 2, catWins = 2, draws = 1)
+        val dogLead = BattleScore(chuckWins = 2, catWins = 1, dogWins = 6)
+        assertEquals(BattleWinner.DOG, dogLead.leader)
+        assertEquals(4, dogLead.leaderMargin)
+
+        val tied = BattleScore(chuckWins = 2, catWins = 2, dogWins = 1, draws = 1)
         assertEquals(BattleWinner.DRAW, tied.leader)
         assertEquals(0, tied.leaderMargin)
     }
@@ -79,5 +85,25 @@ class QuoteBattleTest {
 
         assertTrue(round.chuck.powerProfile.score in 25..100)
         assertTrue(round.cat.powerProfile.score in 25..100)
+    }
+
+    @Test
+    fun battleRound_loserForReturnsNonWinningDogCapableContender() {
+        val cat = BattleContender(
+            FactSource.CAT,
+            Quote("cat", "Cats sleep for many hours each day.", "Cat Fact"),
+            QuotePowerProfile.from("Cats sleep for many hours each day.")
+        )
+        val dog = BattleContender(
+            FactSource.DOG,
+            Quote("dog", "Dogs can understand human pointing gestures.", "Dog Fact"),
+            QuotePowerProfile.from("Dogs can understand human pointing gestures.")
+        )
+        val round = BattleRound.from(cat, dog)
+
+        assertEquals(cat, round.loserFor(BattleWinner.DOG))
+        assertEquals(dog, round.loserFor(BattleWinner.CAT))
+        assertEquals(null, round.loserFor(BattleWinner.CHUCK))
+        assertEquals(null, round.loserFor(BattleWinner.DRAW))
     }
 }

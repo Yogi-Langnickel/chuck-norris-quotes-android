@@ -148,6 +148,7 @@ fun BattleArena(
                 ?.let { winningContender ->
                     VictoryBanner(source = winningContender.source)
                 }
+            BattleChoiceStatus(round = battleRound, selectedWinner = selectedWinner)
             BattleContenderCard(
                 contender = battleRound.first,
                 isWinner = selectedWinner == battleRound.first.source.winner,
@@ -193,6 +194,39 @@ fun BattleArena(
                 onRefreshBoth = onRefreshBoth
             )
         }
+    }
+}
+
+@Composable
+private fun BattleChoiceStatus(round: BattleRound, selectedWinner: BattleWinner?) {
+    val statusText = if (selectedWinner == null) {
+        stringResource(R.string.battle_choice_pending)
+    } else {
+        val winner = round.contenderFor(selectedWinner)
+        val loser = round.loserFor(selectedWinner)
+        if (winner == null || loser == null) {
+            stringResource(R.string.battle_choice_pending)
+        } else {
+            stringResource(
+                R.string.battle_choice_selected,
+                winner.source.scoreLabel,
+                loser.source.scoreLabel
+            )
+        }
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Text(
+            text = statusText,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

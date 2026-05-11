@@ -58,6 +58,12 @@ data class BattleRound(
         return contenders.firstOrNull { it.source.winner == winner }
     }
 
+    fun loserFor(winner: BattleWinner): BattleContender? {
+        if (winner == BattleWinner.DRAW) return null
+        if (contenderFor(winner) == null) return null
+        return contenders.firstOrNull { it.source.winner != winner }
+    }
+
     companion object {
         fun from(chuckQuote: Quote, catFact: Quote): BattleRound {
             return from(

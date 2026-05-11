@@ -45,8 +45,7 @@
     <string name="victory_message">%1$s wins!</string>
     <string name="battle_power_value">%1$d</string>
     <string name="battle_choice_pending">Choose your favourite winner to record this round.</string>
-    <string name="battle_choice_chuck">You chose Chuck. Cat swipes out for a new challenger.</string>
-    <string name="battle_choice_cat">You chose Cat. Chuck swipes out for a new challenger.</string>
+    <string name="battle_choice_selected">%1$s stays in the arena. %2$s swipes out for a new challenger.</string>
     <string name="battle_result_chuck">Power stat: Chuck edges Cat by %1$d.</string>
     <string name="battle_result_cat">Power stat: Cat edges Chuck by %1$d.</string>
     <string name="battle_result_draw">Power stat: even match.</string>
