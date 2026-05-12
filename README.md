@@ -1,4 +1,4 @@
-# Chuck Norris Quotes Android
+# Quote Batttle Royal Android
 
 A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them with a Jetpack Compose interface.
 
@@ -7,7 +7,7 @@ A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, a
 The easiest way to install the app on your own phone is through the latest GitHub release:
 
 1. Open `https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest` on your Android phone.
-2. Download the `chuck-norris-quotes-android-1.3.4-debug.apk` asset.
+2. Download the `chuck-norris-quotes-android-1.3.5-debug.apk` asset.
 3. If Android asks, allow your browser or file manager to install unknown apps.
 4. Open the downloaded APK and confirm installation.
 
@@ -24,7 +24,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 To install a downloaded release asset:
 
 ```bash
-adb install -r chuck-norris-quotes-android-1.3.4-debug.apk
+adb install -r chuck-norris-quotes-android-1.3.5-debug.apk
 ```
 
 ## Build Locally
@@ -76,8 +76,8 @@ The app requests internet access so it can fetch quotes, cat facts, and dog fact
 
 ## Current Release
 
-- Version: `1.3.4`
-- APK SHA-256: `d33036cf204aa387fd8e8d658117d1327dbe5dbc02b398799df10452d83bf312`
+- Version: `1.3.5`
+- APK SHA-256: `5f58333ecfe769c6be2581a78b4a8e8065ed8d348632bfc320c66a59e64383b3`
 
 ## License
 

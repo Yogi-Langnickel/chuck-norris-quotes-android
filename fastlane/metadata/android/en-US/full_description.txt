@@ -1,4 +1,4 @@
-Welcome to the Chuck Norris Quotes app! This application fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them in a user-friendly interface.
+Welcome to Quote Batttle Royal! This application fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them in a user-friendly interface.
 
 With a clean and modern design, the app utilizes Jetpack Compose for a responsive UI and follows the MVVM architecture for maintainability and scalability.
 
