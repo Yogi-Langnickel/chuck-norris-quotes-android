@@ -68,9 +68,9 @@ fun MainScreen(
     LaunchedEffect(selectedTab) {
         when (selectedTab) {
             AppTab.BATTLE -> if (battleRound == null) quoteViewModel.fetchBattleRound()
-            AppTab.CHUCK -> quoteViewModel.fetchRandomQuote()
-            AppTab.CAT -> quoteViewModel.fetchRandomCatFact()
-            AppTab.DOG -> quoteViewModel.fetchRandomDogFact()
+            AppTab.CHUCK -> quoteViewModel.showOrFetchRandomQuote()
+            AppTab.CAT -> quoteViewModel.showOrFetchRandomCatFact()
+            AppTab.DOG -> quoteViewModel.showOrFetchRandomDogFact()
         }
     }
 

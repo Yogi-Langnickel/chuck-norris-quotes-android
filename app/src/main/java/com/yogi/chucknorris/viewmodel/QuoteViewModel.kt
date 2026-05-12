@@ -59,48 +59,62 @@ class QuoteViewModel(
 
     private var activeQuoteRequest: Job? = null
     private var recordedBattleRound: BattleRound? = null
+    private val standaloneQuoteStates = mutableMapOf<QuoteRequest, QuoteUiState>()
 
     fun fetchRandomQuote() {
-        activeQuoteRequest?.cancel()
-        activeQuoteRequest = viewModelScope.launch {
-            _quoteUiState.value = QuoteUiState.Loading
-            try {
-                val fetchedQuote = quoteRepository.getRandomQuote()
-                _quoteUiState.value = QuoteUiState.Success(fetchedQuote)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.CHUCK_QUOTE)
-            }
-        }
+        fetchStandaloneQuote(QuoteRequest.CHUCK_QUOTE) { quoteRepository.getRandomQuote() }
+    }
+
+    fun showOrFetchRandomQuote() {
+        showCachedStandaloneQuote(QuoteRequest.CHUCK_QUOTE, ::fetchRandomQuote)
     }
 
     fun fetchRandomCatFact() {
-        activeQuoteRequest?.cancel()
-        activeQuoteRequest = viewModelScope.launch {
-            _quoteUiState.value = QuoteUiState.Loading
-            try {
-                val fetchedQuote = quoteRepository.getRandomCatFact()
-                _quoteUiState.value = QuoteUiState.Success(fetchedQuote)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.CAT_FACT)
-            }
-        }
+        fetchStandaloneQuote(QuoteRequest.CAT_FACT) { quoteRepository.getRandomCatFact() }
+    }
+
+    fun showOrFetchRandomCatFact() {
+        showCachedStandaloneQuote(QuoteRequest.CAT_FACT, ::fetchRandomCatFact)
     }
 
     fun fetchRandomDogFact() {
+        fetchStandaloneQuote(QuoteRequest.DOG_FACT) { quoteRepository.getRandomDogFact() }
+    }
+
+    fun showOrFetchRandomDogFact() {
+        showCachedStandaloneQuote(QuoteRequest.DOG_FACT, ::fetchRandomDogFact)
+    }
+
+    private fun showCachedStandaloneQuote(
+        request: QuoteRequest,
+        fetch: () -> Unit
+    ) {
+        val cachedState = standaloneQuoteStates[request]
+        if (cachedState == null) {
+            fetch()
+        } else {
+            activeQuoteRequest?.cancel()
+            _quoteUiState.value = cachedState
+        }
+    }
+
+    private fun fetchStandaloneQuote(
+        request: QuoteRequest,
+        fetch: suspend () -> Quote
+    ) {
         activeQuoteRequest?.cancel()
         activeQuoteRequest = viewModelScope.launch {
             _quoteUiState.value = QuoteUiState.Loading
             try {
-                val fetchedQuote = quoteRepository.getRandomDogFact()
-                _quoteUiState.value = QuoteUiState.Success(fetchedQuote)
+                val nextState = QuoteUiState.Success(fetch())
+                standaloneQuoteStates[request] = nextState
+                _quoteUiState.value = nextState
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _quoteUiState.value = QuoteUiState.Error(QuoteRequest.DOG_FACT)
+                val nextState = QuoteUiState.Error(request)
+                standaloneQuoteStates[request] = nextState
+                _quoteUiState.value = nextState
             }
         }
     }

@@ -155,6 +155,40 @@ class QuoteViewModelTest {
     }
 
     @Test
+    fun showOrFetchRandomQuote_reusesCachedStandaloneQuote() = runTest {
+        val chuckQuote = Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris")
+        val dataSource = FakeQuoteDataSource(quoteResult = Result.success(chuckQuote))
+        val viewModel = QuoteViewModel(dataSource, FakeBattleScoreStore())
+
+        viewModel.showOrFetchRandomQuote()
+        advanceUntilIdle()
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.showOrFetchRandomQuote()
+        advanceUntilIdle()
+
+        assertEquals(1, dataSource.quoteRequestCount)
+        assertEquals(QuoteUiState.Success(chuckQuote), viewModel.quoteUiState.value)
+    }
+
+    @Test
+    fun manualRefreshBypassesCachedStandaloneQuote() = runTest {
+        val firstQuote = Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris")
+        val secondQuote = Quote("chuck-2", "Chuck Norris counted to infinity. Twice.", "Chuck Norris")
+        val dataSource = FakeQuoteDataSource(quoteResult = Result.success(firstQuote))
+        val viewModel = QuoteViewModel(dataSource, FakeBattleScoreStore())
+
+        viewModel.showOrFetchRandomQuote()
+        advanceUntilIdle()
+        dataSource.quoteResult = Result.success(secondQuote)
+        viewModel.fetchRandomQuote()
+        advanceUntilIdle()
+
+        assertEquals(2, dataSource.quoteRequestCount)
+        assertEquals(QuoteUiState.Success(secondQuote), viewModel.quoteUiState.value)
+    }
+
+    @Test
     fun fetchBattleRound_featuresPowerLeaderWithoutRecordingScore() = runTest {
         val chuckQuote = Quote("chuck-1", "Chuck Norris can slam a revolving door.", "Chuck Norris")
         val catFact = Quote("cat-1", "Cats sleep for many hours each day.", "Cat Fact")
@@ -336,9 +370,25 @@ class QuoteViewModelTest {
             )
         )
     ) : QuoteDataSource {
-        override suspend fun getRandomQuote(): Quote = quoteResult.getOrThrow()
-        override suspend fun getRandomCatFact(): Quote = catFactResult.getOrThrow()
-        override suspend fun getRandomDogFact(): Quote = dogFactResult.getOrThrow()
+        var quoteRequestCount = 0
+        var catFactRequestCount = 0
+        var dogFactRequestCount = 0
+
+        override suspend fun getRandomQuote(): Quote {
+            quoteRequestCount++
+            return quoteResult.getOrThrow()
+        }
+
+        override suspend fun getRandomCatFact(): Quote {
+            catFactRequestCount++
+            return catFactResult.getOrThrow()
+        }
+
+        override suspend fun getRandomDogFact(): Quote {
+            dogFactRequestCount++
+            return dogFactResult.getOrThrow()
+        }
+
         override suspend fun getBattleRound(): BattleRound = battleRoundResult.getOrThrow()
         override suspend fun getBattleChallenger(excludedSources: Set<FactSource>): BattleContender {
             val source = FactSource.entries.first { it !in excludedSources }
