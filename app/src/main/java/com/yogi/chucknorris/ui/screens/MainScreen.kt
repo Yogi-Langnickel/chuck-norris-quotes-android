@@ -10,6 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -28,6 +30,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.launch
 import com.yogi.chucknorris.domain.BattlePeriod
 import com.yogi.chucknorris.domain.BattleScore
@@ -44,7 +47,9 @@ private enum class AppTab {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    quoteViewModel: QuoteViewModel = viewModel()
+    quoteViewModel: QuoteViewModel = viewModel(),
+    isDarkTheme: Boolean = false,
+    onThemeToggled: () -> Unit = {}
 ) {
     val quoteUiState by quoteViewModel.quoteUiState.observeAsState(QuoteUiState.Loading)
     val battleRound by quoteViewModel.battleRound.observeAsState()
@@ -81,15 +86,35 @@ fun MainScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(stringResource(R.string.app_name))
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                         Text(
                             text = stringResource(R.string.app_tagline),
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 },
                 actions = {
+                    IconButton(onClick = onThemeToggled) {
+                        Icon(
+                            imageVector = if (isDarkTheme) {
+                                Icons.Default.LightMode
+                            } else {
+                                Icons.Default.DarkMode
+                            },
+                            contentDescription = if (isDarkTheme) {
+                                stringResource(R.string.switch_to_light_theme)
+                            } else {
+                                stringResource(R.string.switch_to_dark_theme)
+                            }
+                        )
+                    }
                     IconButton(
                         onClick = {
                             openLatestRelease(

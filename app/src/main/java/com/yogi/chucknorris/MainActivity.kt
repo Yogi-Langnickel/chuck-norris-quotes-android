@@ -1,11 +1,19 @@
 package com.yogi.chucknorris
 
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yogi.chucknorris.data.local.AndroidBattleScoreStore
+import com.yogi.chucknorris.data.local.AndroidThemePreferenceStore
 import com.yogi.chucknorris.ui.screens.MainScreen
 import com.yogi.chucknorris.ui.theme.ChuckNorrisTheme
 import com.yogi.chucknorris.viewmodel.QuoteViewModel
@@ -33,17 +41,44 @@ class MainActivity : ComponentActivity() {
         val battleScoreStore = AndroidBattleScoreStore(
             getSharedPreferences("quote_battle_scores", MODE_PRIVATE)
         )
-
-        enableEdgeToEdge()
+        val themePreferenceStore = AndroidThemePreferenceStore(
+            getSharedPreferences("quote_battle_theme", MODE_PRIVATE)
+        )
 
         setContent {
-            ChuckNorrisTheme {
+            val systemDarkTheme = isSystemInDarkTheme()
+            var darkThemeOverride by remember {
+                mutableStateOf(themePreferenceStore.darkThemeOverride)
+            }
+            val isDarkTheme = darkThemeOverride ?: systemDarkTheme
+
+            SideEffect {
+                val systemBarStyle = if (isDarkTheme) {
+                    SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                } else {
+                    SystemBarStyle.light(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT
+                    )
+                }
+                enableEdgeToEdge(
+                    statusBarStyle = systemBarStyle,
+                    navigationBarStyle = systemBarStyle
+                )
+            }
+
+            ChuckNorrisTheme(darkTheme = isDarkTheme) {
                 // 3. Use the factory to provide the repository to the ViewModel
                 val quoteViewModel: QuoteViewModel = viewModel(
                     factory = QuoteViewModel.provideFactory(repository, battleScoreStore)
                 )
                 MainScreen(
-                    quoteViewModel = quoteViewModel
+                    quoteViewModel = quoteViewModel,
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggled = {
+                        darkThemeOverride = !isDarkTheme
+                        themePreferenceStore.darkThemeOverride = darkThemeOverride
+                    }
                 )
             }
         }

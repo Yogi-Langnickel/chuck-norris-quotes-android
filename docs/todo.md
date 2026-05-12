@@ -16,7 +16,7 @@ Track small follow-ups that should not block the current quote and cat fact feat
 - [x] Refresh battle challengers from a random non-winner stream with fallback when an eligible API fails.
 - [x] Smooth battle swipe gestures by preserving accepted drag offset into the loser exit animation and spring-settling rejected swipes.
 - [x] Remove battle card tilt/rotation so accepted swipes slide out cleanly without a brief flip.
-- [x] Add a visible Update app button that opens the latest GitHub release page for manual APK updates.
+- [x] Add a top-bar update action that opens the latest GitHub release page for manual APK updates.
 - [x] Add source-specific Chuck, Cat, and Dog victory animations on top of the winning battle card.
 - [x] Replace quote-only `LiveData<Quote>` state with an explicit UI state model for loading, success, and error states.
 - [x] Surface Chuck Norris API and Cat Fact API failures as clear retryable error UI instead of treating fallback text as content.
@@ -35,6 +35,7 @@ Track small follow-ups that should not block the current quote and cat fact feat
 
 - [x] Develop Quote Battle further as a possible standalone mode/app with a chaos champion streak and richer tournament framing.
 - [ ] Add richer animation polish beyond the current winner celebration and loser swipe-away.
+- [ ] Add Compose UI smoke coverage for Battle tab headline removal, battle selection guidance, and the light/dark theme toggle once UI test infrastructure is introduced.
 - [ ] Add a share-card generator that renders the current quote/fact as a themed image card, with themes such as classified file, retro action poster, and cat fact interruption.
 - [ ] Add a lightweight daily challenge around one quote/fact, such as rating the power level, guessing the category, or deciding whether a cat survives the fact.
 - [ ] Revisit Chuck source rotation if a reliable free/no-auth Chuck Norris API besides `api.chucknorris.io` becomes available.

@@ -1,6 +1,7 @@
 package com.yogi.chucknorris.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -27,10 +28,35 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFD8C2B9)
 )
 
+private val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFFFFB59D),
+    onPrimary = Color(0xFF5E1600),
+    primaryContainer = Color(0xFF872A10),
+    onPrimaryContainer = Color(0xFFFFDBCD),
+    secondary = Color(0xFF9FD0C9),
+    onSecondary = Color(0xFF003733),
+    secondaryContainer = Color(0xFF064F4A),
+    onSecondaryContainer = Color(0xFFC7ECE6),
+    tertiary = Color(0xFFD8C974),
+    onTertiary = Color(0xFF393000),
+    tertiaryContainer = Color(0xFF524700),
+    onTertiaryContainer = Color(0xFFF5E58E),
+    background = Color(0xFF181210),
+    onBackground = Color(0xFFEDE0DA),
+    surface = Color(0xFF181210),
+    onSurface = Color(0xFFEDE0DA),
+    surfaceContainerHigh = Color(0xFF2A211E),
+    surfaceContainerHighest = Color(0xFF352B27),
+    outlineVariant = Color(0xFF56433C)
+)
+
 @Composable
-fun ChuckNorrisTheme(content: @Composable () -> Unit) {
+fun ChuckNorrisTheme(
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit
+) {
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         content = content
     )
 }
