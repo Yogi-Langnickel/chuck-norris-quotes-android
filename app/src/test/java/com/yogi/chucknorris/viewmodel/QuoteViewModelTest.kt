@@ -293,14 +293,16 @@ class QuoteViewModelTest {
     }
 
     @Test
-    fun continueBattleWithSelectedWinner_refreshesOnlyLoserSide() = runTest {
+    fun continueBattleWithSelectedWinner_refreshesBothContenders() = runTest {
         val firstRound = BattleRound.from(
             Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris"),
             Quote("cat-1", "Cats can rotate their ears.", "Cat Fact")
         )
-        val nextCatFact = Quote("cat-2", "Cats have excellent night vision.", "Cat Fact")
+        val secondRound = BattleRound.from(
+            Quote("chuck-2", "Chuck Norris counted to infinity. Twice.", "Chuck Norris"),
+            Quote("dog-1", "Dogs can understand human pointing gestures.", "Dog Fact")
+        )
         val dataSource = FakeQuoteDataSource(
-            catFactResult = Result.success(nextCatFact),
             battleRoundResult = Result.success(firstRound)
         )
         val viewModel = QuoteViewModel(dataSource, FakeBattleScoreStore())
@@ -308,12 +310,14 @@ class QuoteViewModelTest {
         viewModel.fetchBattleRound()
         advanceUntilIdle()
         viewModel.chooseBattleWinner(BattleWinner.CHUCK)
+        dataSource.battleRoundResult = Result.success(secondRound)
         viewModel.continueBattleWithSelectedWinner()
         advanceUntilIdle()
 
         val nextRound = viewModel.battleRound.value
-        assertEquals(firstRound.chuck.quote, nextRound?.chuck?.quote)
-        assertEquals(nextCatFact, nextRound?.cat?.quote)
+        assertEquals(secondRound, nextRound)
+        assertEquals(null, nextRound?.contenders?.find { it.quote.id == firstRound.chuck.quote.id })
+        assertEquals(null, nextRound?.contenders?.find { it.quote.id == firstRound.cat.quote.id })
         assertEquals(null, viewModel.selectedBattleWinner.value)
     }
 

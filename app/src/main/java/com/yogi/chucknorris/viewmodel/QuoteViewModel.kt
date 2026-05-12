@@ -159,7 +159,6 @@ class QuoteViewModel(
     }
 
     fun continueBattleWithSelectedWinner() {
-        val currentRound = _battleRound.value ?: return
         val selectedWinner = _selectedBattleWinner.value ?: return
         if (selectedWinner == BattleWinner.DRAW) return
 
@@ -167,19 +166,14 @@ class QuoteViewModel(
         activeQuoteRequest = viewModelScope.launch {
             _isBattleLoading.value = true
             try {
-                val winningContender = currentRound.contenderFor(selectedWinner) ?: return@launch
-                val challenger = quoteRepository.getBattleChallenger(
-                    excludedSources = setOf(winningContender.source)
-                )
-                val nextRound = if (currentRound.first.source == winningContender.source) {
-                    BattleRound.from(winningContender, challenger)
-                } else {
-                    BattleRound.from(challenger, winningContender)
-                }
+                val nextRound = quoteRepository.getBattleRound()
                 _battleRound.value = nextRound
                 _selectedBattleWinner.value = null
                 recordedBattleRound = null
-                _quoteUiState.value = QuoteUiState.Success(challenger.quote)
+                val featuredQuote = nextRound.contenders
+                    .maxBy { it.powerProfile.score }
+                    .quote
+                _quoteUiState.value = QuoteUiState.Success(featuredQuote)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

@@ -31,8 +31,7 @@
     <string name="dog_score">Dog</string>
     <string name="draw_score">Draws</string>
     <string name="personal_score_heading">Your %1$s picks</string>
-    <string name="champion_streak_heading">Current champion</string>
-    <string name="champion_streak_body">%1$s is holding a %2$d-win streak.</string>
+    <string name="champion_streak_inline">Current champion: %1$s (%2$d)</string>
     <string name="battle_leader_empty">No winner for this period yet.</string>
     <string name="battle_leader_chuck">Chuck leads this period by %1$d.</string>
     <string name="battle_leader_cat">Cat leads this period by %1$d.</string>
@@ -44,8 +43,6 @@
     <string name="winner_selected">Winner selected</string>
     <string name="victory_message">%1$s wins!</string>
     <string name="battle_power_value">%1$d</string>
-    <string name="battle_choice_pending">Choose your favourite winner to record this round.</string>
-    <string name="battle_choice_selected">%1$s stays in the arena. %2$s swipes out for a new challenger.</string>
     <string name="battle_result_chuck">Power stat: Chuck edges Cat by %1$d.</string>
     <string name="battle_result_cat">Power stat: Cat edges Chuck by %1$d.</string>
     <string name="battle_result_draw">Power stat: even match.</string>

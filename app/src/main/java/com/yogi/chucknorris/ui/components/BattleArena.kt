@@ -55,6 +55,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yogi.chucknorris.R
 import com.yogi.chucknorris.domain.BattleContender
@@ -132,8 +133,7 @@ fun BattleArena(
             }
         }
 
-        ScoreStrip(period = selectedPeriod, score = score)
-        ChampionStreakBanner(streak = battleStreak)
+        ScoreStrip(period = selectedPeriod, score = score, streak = battleStreak)
 
         if (battleRound == null) {
             if (isLoading) {
@@ -148,7 +148,6 @@ fun BattleArena(
                 ?.let { winningContender ->
                     VictoryBanner(source = winningContender.source)
                 }
-            BattleChoiceStatus(round = battleRound, selectedWinner = selectedWinner)
             BattleContenderCard(
                 contender = battleRound.first,
                 isWinner = selectedWinner == battleRound.first.source.winner,
@@ -198,80 +197,41 @@ fun BattleArena(
 }
 
 @Composable
-private fun BattleChoiceStatus(round: BattleRound, selectedWinner: BattleWinner?) {
-    val statusText = if (selectedWinner == null) {
-        stringResource(R.string.battle_choice_pending)
-    } else {
-        val winner = round.contenderFor(selectedWinner)
-        val loser = round.loserFor(selectedWinner)
-        if (winner == null || loser == null) {
-            stringResource(R.string.battle_choice_pending)
-        } else {
-            stringResource(
-                R.string.battle_choice_selected,
-                winner.source.scoreLabel,
-                loser.source.scoreLabel
-            )
-        }
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
-    ) {
-        Text(
-            text = statusText,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun ChampionStreakBanner(streak: BattleStreak) {
+private fun ChampionStreakText(streak: BattleStreak) {
     val champion = streak.champion ?: return
     if (!streak.isActive) return
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 3.dp,
-        color = MaterialTheme.colorScheme.primaryContainer
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.champion_streak_heading),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(
-                    R.string.champion_streak_body,
-                    champion.sourceLabel,
-                    streak.wins
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
-    }
+    Text(
+        text = stringResource(
+            R.string.champion_streak_inline,
+            champion.sourceLabel,
+            streak.wins
+        ),
+        modifier = Modifier.padding(start = 12.dp),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.End,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
-private fun ScoreStrip(period: BattlePeriod, score: BattleScore) {
-    Text(
-        text = stringResource(R.string.personal_score_heading, period.label()),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.SemiBold
-    )
+private fun ScoreStrip(period: BattlePeriod, score: BattleScore, streak: BattleStreak) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.personal_score_heading, period.label()),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold
+        )
+        ChampionStreakText(streak = streak)
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
