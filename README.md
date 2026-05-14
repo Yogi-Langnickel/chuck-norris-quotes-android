@@ -4,27 +4,29 @@ A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, a
 
 ## Install On Android
 
+Quick download: [latest Quote Battle Royal APK](https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest/download/quote-battle-royal-latest.apk)
+
 The easiest way to install the app on your own phone is through the latest GitHub release:
 
-1. Open `https://github.com/Yogi-Langnickel/chuck-norris-quotes-android/releases/latest` on your Android phone.
-2. Download the `chuck-norris-quotes-android-1.3.7-debug.apk` asset.
+1. Open the quick download link above on your Android phone.
+2. Download the release APK asset.
 3. If Android asks, allow your browser or file manager to install unknown apps.
 4. Open the downloaded APK and confirm installation.
 
-This is a debug-signed APK for personal testing. Android may show a warning because it is not distributed through Google Play.
+Android may show a warning because the app is not distributed through Google Play.
 
 ## Install With ADB
 
 From a machine with Android platform tools installed:
 
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r quote-battle-royal-latest.apk
 ```
 
 To install a downloaded release asset:
 
 ```bash
-adb install -r chuck-norris-quotes-android-1.3.7-debug.apk
+adb install -r quote-battle-royal-latest.apk
 ```
 
 ## Build Locally
@@ -41,13 +43,13 @@ Commands:
 
 ```bash
 ./gradlew testDebugUnitTest
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
 
 The generated APK is written to:
 
 ```text
-app/build/outputs/apk/debug/app-debug.apk
+app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
 ## Features
@@ -68,7 +70,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - Supports copying and sharing the current quote or fact.
 - Uses Kotlin and Jetpack Compose.
 - Keeps API access behind a repository layer.
-- Includes a GitHub Actions workflow that runs unit tests and uploads a debug APK artifact.
+- Includes a GitHub Actions workflow that runs unit tests.
 
 ## Privacy
 
@@ -76,8 +78,8 @@ The app requests internet access so it can fetch quotes, cat facts, and dog fact
 
 ## Current Release
 
-- Version: `1.3.7`
-- APK SHA-256: `0d0bd5fbf4644784e77b30d138417a9dff472d984ce08f207090ad537903054e`
+- Version: `1.3.8`
+- APK SHA-256: `1e1e497165d5dfe7f923437b13802e04893720698cf34e74d4e8f02f71c22b36`
 
 ## License
 

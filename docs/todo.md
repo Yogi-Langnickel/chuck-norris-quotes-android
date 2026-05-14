@@ -29,7 +29,7 @@ Track small follow-ups that should not block the current quote and cat fact feat
 
 - [x] Update `docs/agent-memory.md` after each meaningful app change with the decision, files touched, and checks run.
 - [x] Keep README and Fastlane metadata aligned whenever a new third-party endpoint or user-visible feature is added.
-- [x] Re-run `./gradlew testDebugUnitTest` and `./gradlew assembleDebug` before publishing another APK.
+- [x] Re-run `./gradlew testDebugUnitTest` and `./gradlew assembleRelease` before publishing another APK.
 
 ## Future Fun Features
 

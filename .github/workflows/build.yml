@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Android
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -33,11 +33,11 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Build release APK
+        run: ./gradlew assembleRelease
 
-      - name: Upload APK
+      - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: chuck-norris-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: quote-battle-royal-release-apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
