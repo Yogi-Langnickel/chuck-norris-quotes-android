@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Quote Batttle Royal</string>
+    <string name="app_name">Quote Battle Royal</string>
     <string name="app_tagline">Battle picks and random facts</string>
     <string name="fetch_quote_button">Fetch a New Quote</string>
     <string name="get_new_quote">New Quote</string>

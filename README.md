@@ -1,4 +1,4 @@
-# Quote Batttle Royal Android
+# Quote Battle Royal Android
 
 A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them with a Jetpack Compose interface.
 
