@@ -23,7 +23,8 @@ Make Quote Battle presentable for a morning demo on May 12, 2026 by turning the 
 - Scores are local to the device and persist through app restarts.
 - There is no backend leaderboard yet.
 - The update action opens the GitHub latest-release page; it is not a silent in-app updater.
-- Installing an APK with the same package name and signing key updates the existing app and should keep local scores.
+- Installing an APK with the same application ID (`com.yogi.quotebattleroyal`)
+  and signing key updates the existing app and should keep local scores.
 - If Android reports a signature mismatch, uninstall the previous app first; uninstalling clears local scores.
 
 ## Later Enhancements

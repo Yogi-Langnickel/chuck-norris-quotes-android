@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.yogi.chucknorris"
+    namespace = "com.yogi.quotebattleroyal"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.yogi.chucknorris"
+        applicationId = "com.yogi.quotebattleroyal"
         minSdk = 26
         targetSdk = 35
         versionCode = 14
