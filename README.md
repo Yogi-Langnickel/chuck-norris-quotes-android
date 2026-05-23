@@ -79,7 +79,7 @@ The app requests internet access so it can fetch quotes, cat facts, and dog fact
 ## Current Release
 
 - Version: `1.3.8`
-- APK SHA-256: `1e1e497165d5dfe7f923437b13802e04893720698cf34e74d4e8f02f71c22b36`
+- APK SHA-256: `045378dfa0ac395c2021e20781e0ab7f51b432a99b9e0d33d4b39a868796914a`
 
 ## License
 
