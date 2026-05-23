@@ -63,7 +63,14 @@ Before uploading files to itch.io:
 
 1. Confirm the Android package id is `com.yogi.quotebattleroyal`.
 1. Confirm the version in `app/build.gradle.kts`.
-1. Build from a release-signing environment outside repo-stored credentials.
+1. Build from the protected release-signing environment outside repo-stored
+   credentials:
+   - default properties path:
+     `/Users/yogi/Coding/projects/protected/quote-battle/quote-battle-release.properties`
+   - default keystore path:
+     `/Users/yogi/Coding/projects/protected/quote-battle/quote-battle-release.jks`
+   - optional override:
+     `QUOTE_BATTLE_SIGNING_PROPERTIES=/path/to/release.properties`
 1. Produce:
    - signed APK
    - SHA256 checksum
@@ -73,14 +80,14 @@ Before uploading files to itch.io:
 1. Run:
 
 ```sh
-./gradlew test
-./gradlew assembleDebug
+./gradlew clean test assembleRelease
+/usr/local/share/android-commandlinetools/build-tools/36.0.0/apksigner verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+shasum -a 256 app/build/outputs/apk/release/app-release.apk
 git diff --check
 ```
 
-Use `./gradlew assembleRelease` only when signing is configured safely outside
-the repo. Never upload a debug APK for public distribution unless the user
-explicitly accepts that temporary tester-only tradeoff.
+Never upload a debug APK for public distribution unless the user explicitly
+accepts that temporary tester-only tradeoff.
 
 ## Publishing Steps
 
