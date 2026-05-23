@@ -3,10 +3,13 @@
   "words": [
     "androidx",
     "chucknorris",
+    "gradlew",
     "gson",
-    "Ktor",
-    "ktor",
+    "Jetpack",
     "kotlinx",
+    "ktor",
+    "Ktor",
+    "MVVM",
     "viewmodel"
   ]
 }

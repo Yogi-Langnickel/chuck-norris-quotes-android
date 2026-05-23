@@ -43,8 +43,13 @@ submission-only artifacts in Git.
 
 ## App Store Checklist
 
-- [ ] Decide whether the first iOS delivery is a native SwiftUI app or a shared
-  Kotlin Multiplatform extraction.
+- [x] Decide whether the first iOS delivery is a native SwiftUI app or a shared
+  Kotlin Multiplatform extraction: use a native SwiftUI app for v1.
+- [x] Choose the initial iOS project location:
+  `ios/QuoteBattleRoyal` in this repository.
+- [x] Choose the initial deployment target: iOS 15.0.
+- [ ] Add GitHub source-build instructions for friends who can build locally
+  from Xcode before an Apple Developer/TestFlight path exists.
 - [ ] Keep the iOS bundle id, Team ID, provisioning profiles, certificates, and
   App Store Connect API keys out of Git.
 - [ ] Mirror current Android product behavior before adding iOS-only features:
@@ -84,6 +89,8 @@ needed. Keep this in-repo version anonymous.
 ## iOS Scaffold Decision Record
 
 Decision: start with a native SwiftUI scaffold when iOS implementation begins.
+Place it under `ios/QuoteBattleRoyal` in this repository and use iOS 15.0 as
+the initial deployment target.
 
 Rationale:
 
@@ -105,6 +112,9 @@ Non-goals for the scaffold:
 
 - No signing material, provisioning profiles, App Store Connect credentials, or
   private release config in Git.
+- No promise of one-tap GitHub installation on physical iPhones. GitHub is the
+  source distribution channel until Apple Developer/TestFlight is available;
+  testers need Xcode/local signing to install from source.
 - No analytics, crash reporting, ads, tracking, login, payments, or private
   backend without a separate privacy/security review.
 - No Android app source changes just to prepare the iOS scaffold.
