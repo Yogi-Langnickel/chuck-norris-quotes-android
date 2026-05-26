@@ -214,6 +214,20 @@ class QuoteViewModelTest {
     }
 
     @Test
+    fun fetchBattleRound_emitsErrorAndStopsLoadingWhenSourcesFail() = runTest {
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(battleRoundResult = Result.failure(RuntimeException("Dog API failed"))),
+            FakeBattleScoreStore()
+        )
+
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+
+        assertEquals(QuoteUiState.Error(QuoteRequest.BATTLE_ROUND), viewModel.quoteUiState.value)
+        assertEquals(false, viewModel.isBattleLoading.value)
+    }
+
+    @Test
     fun chooseBattleWinner_recordsSelectedWinnerOnce() = runTest {
         val round = BattleRound.from(
             Quote("chuck-1", "Chuck Norris can slam a revolving door.", "Chuck Norris"),

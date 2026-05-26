@@ -22,6 +22,7 @@ import com.yogi.quotebattleroyal.data.service.ApiService
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.serialization.gson.*
 
 class MainActivity : ComponentActivity() {
@@ -30,6 +31,11 @@ class MainActivity : ComponentActivity() {
 
         // 1. Create the Ktor client instance
         val ktorClient = HttpClient(Android) {
+            install(HttpTimeout) {
+                connectTimeoutMillis = 5_000
+                socketTimeoutMillis = 8_000
+                requestTimeoutMillis = 8_000
+            }
             install(ContentNegotiation) {
                 gson()
             }

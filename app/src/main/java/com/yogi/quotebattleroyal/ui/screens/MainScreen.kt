@@ -195,6 +195,7 @@ fun MainScreen(
                     }
                     AppTab.CHUCK -> FactTabContent(
                         quoteUiState = quoteUiState,
+                        expectedRequest = QuoteRequest.CHUCK_QUOTE,
                         expectedSourceLabel = "Chuck Norris",
                         isQuoteLoading = isQuoteLoading,
                         loadingLabel = stringResource(R.string.loading_chuck),
@@ -219,6 +220,7 @@ fun MainScreen(
                     )
                     AppTab.CAT -> FactTabContent(
                         quoteUiState = quoteUiState,
+                        expectedRequest = QuoteRequest.CAT_FACT,
                         expectedSourceLabel = "Cat Fact",
                         isQuoteLoading = isQuoteLoading,
                         loadingLabel = stringResource(R.string.loading_cat),
@@ -243,7 +245,9 @@ fun MainScreen(
                     )
                     AppTab.DOG -> FactTabContent(
                         quoteUiState = quoteUiState,
+                        expectedRequest = QuoteRequest.DOG_FACT,
                         expectedSourceLabel = "Dog Fact",
+                        attributionText = stringResource(R.string.dog_api_attribution),
                         isQuoteLoading = isQuoteLoading,
                         loadingLabel = stringResource(R.string.loading_dog),
                         onRefresh = quoteViewModel::fetchRandomDogFact,
@@ -274,7 +278,9 @@ fun MainScreen(
 @Composable
 private fun FactTabContent(
     quoteUiState: QuoteUiState,
+    expectedRequest: QuoteRequest,
     expectedSourceLabel: String,
+    attributionText: String? = null,
     isQuoteLoading: Boolean,
     loadingLabel: String,
     onRefresh: () -> Unit,
@@ -285,15 +291,17 @@ private fun FactTabContent(
     val currentQuote = (quoteUiState as? QuoteUiState.Success)
         ?.quote
         ?.takeIf { it.sourceLabel == expectedSourceLabel }
+    val matchingError = (quoteUiState as? QuoteUiState.Error)
+        ?.takeIf { it.request == expectedRequest }
 
     when {
         isQuoteLoading ||
             quoteUiState is QuoteUiState.Loading ||
-            (currentQuote == null && quoteUiState !is QuoteUiState.Error) -> {
+            (currentQuote == null && matchingError == null) -> {
             LoadingState(label = loadingLabel)
         }
-        quoteUiState is QuoteUiState.Error -> {
-            QuoteErrorCard(request = quoteUiState.request, onRetry = onRetry)
+        matchingError != null -> {
+            QuoteErrorCard(request = matchingError.request, onRetry = onRetry)
         }
         currentQuote != null -> {
             QuoteCard(quote = currentQuote)
@@ -329,6 +337,14 @@ private fun FactTabContent(
                 }
             }
         }
+    }
+    attributionText?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

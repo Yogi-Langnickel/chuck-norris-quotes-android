@@ -56,7 +56,7 @@ app/build/outputs/apk/release/app-release-unsigned.apk
 
 - Fetches random Chuck Norris quotes from `api.chucknorris.io`.
 - Rotates random cat facts between `catfact.ninja` and MeowFacts.
-- Fetches random dog facts from Dog API.
+- Fetches random dog facts from Dog API with backup providers so outages do not block the Dog tab or Battle Mode.
 - Runs a battle-first mode where the user swipes away the loser, the winner scores, and a new challenger from another fact stream slides in.
 - Uses spring settling and straight slide-out motion for smoother battle swipes.
 - Shows source-specific Chuck, Cat, and Dog victory animations with confetti when a winner is picked.
@@ -74,9 +74,14 @@ app/build/outputs/apk/release/app-release-unsigned.apk
 
 ## Privacy
 
-The app requests internet access so it can fetch quotes, cat facts, and dog facts from public third-party APIs. It does not require login, payments, contacts, location, or local account access.
+The app requests internet access so it can fetch quotes, cat facts, and dog facts from public third-party APIs. Dog facts are powered by Stratonauts Dog API and use backup dog facts if remote dog providers are unavailable. It does not require login, payments, contacts, location, or local account access.
 
-## Current Release
+## Hotfix Candidate
+
+- Version: `1.3.9`
+- Status: dog facts outage hotfix candidate; release artifact SHA is assigned when the signed APK is produced.
+
+## Latest Published Release
 
 - Version: `1.3.8`
 - APK SHA-256: `045378dfa0ac395c2021e20781e0ab7f51b432a99b9e0d33d4b39a868796914a`
