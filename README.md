@@ -1,6 +1,8 @@
 # Quote Battle Royal Android
 
-A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them with a Jetpack Compose interface.
+A small Kotlin Android app that fetches random Chuck Norris quotes, cat facts,
+dog facts, advice slips, and dad jokes from public APIs, then turns them into a
+Jetpack Compose quote battle.
 
 ## Install On Android
 
@@ -56,16 +58,18 @@ app/build/outputs/apk/release/app-release-unsigned.apk
 
 - Fetches random Chuck Norris quotes from `api.chucknorris.io`.
 - Rotates random cat facts between `catfact.ninja` and MeowFacts.
-- Fetches random dog facts from Dog API.
+- Fetches random dog facts from Dog API with backup providers so outages do not block the Dog tab or Battle Mode.
+- Adds Ask Yogi as a dedicated advice/joke source powered by Advice Slip and I Can Haz Dad Joke.
 - Runs a battle-first mode where the user swipes away the loser, the winner scores, and a new challenger from another fact stream slides in.
+- Keeps one prefetched fact per stream so tabs and battles feel faster.
 - Uses spring settling and straight slide-out motion for smoother battle swipes.
-- Shows source-specific Chuck, Cat, and Dog victory animations with confetti when a winner is picked.
+- Shows a Champion Podium scoreboard and a Victory Stamp when a winner is picked.
 - Highlights the current Battle Mode champion streak as the same source keeps winning.
-- Tracks personal daily, weekly, and monthly winners locally.
-- Separates Battle Mode, Chuck Facts, Cat Facts, and Dog Facts into dedicated tabs.
-- Limits Chuck, Cat, and Dog refresh streams to 10 requests per minute each.
+- Tracks personal daily, weekly, and monthly winners locally across Chuck, Cat, Dog, and Yogi.
+- Separates Battle Mode, Chuck Facts, Cat Facts, Dog Facts, and Ask Yogi into focused views.
+- Limits refresh streams to protect public APIs.
 - Links to the latest GitHub release from a top-bar action inside the app.
-- Supports a persistent light/dark theme toggle.
+- Defaults to dark mode and supports a persistent light/dark theme toggle.
 - Shows a local-only fact power profile for the current quote or fact.
 - Supports copying and sharing the current quote or fact.
 - Uses Kotlin and Jetpack Compose.
@@ -74,12 +78,23 @@ app/build/outputs/apk/release/app-release-unsigned.apk
 
 ## Privacy
 
-The app requests internet access so it can fetch quotes, cat facts, and dog facts from public third-party APIs. It does not require login, payments, contacts, location, or local account access.
+The app requests internet access so it can fetch quotes, cat facts, dog facts,
+advice slips, and dad jokes from public third-party APIs. Dog facts are powered
+by Stratonauts Dog API and use backup dog facts if remote dog providers are
+unavailable. It does not require login, payments, contacts, location, analytics,
+ads, or local account access.
 
-## Current Release
+## Release Candidate
 
-- Version: `1.3.8`
-- APK SHA-256: `1e1e497165d5dfe7f923437b13802e04893720698cf34e74d4e8f02f71c22b36`
+- Version: `1.4.0`
+- Status: Ask Yogi, battle speed, Champion Podium, Victory Stamp, and proposal
+  color system release candidate; release artifact SHA is assigned when the
+  signed APK is produced.
+
+## Latest Published Release
+
+- Version: `1.4.0`
+- APK SHA-256: `c6b4c8809e779faea91e5b60df4bbb279e4ac925bee62e68f17c69a3717a7ffa`
 
 ## License
 

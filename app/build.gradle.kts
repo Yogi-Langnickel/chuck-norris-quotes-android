@@ -1,19 +1,38 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
 
+val releaseSigningPropertiesFile = providers
+    .environmentVariable("QUOTE_BATTLE_SIGNING_PROPERTIES")
+    .map { file(it) }
+    .orElse(file("/Users/yogi/Coding/projects/protected/quote-battle/quote-battle-release.properties"))
+    .get()
+
+val releaseSigningProperties = Properties()
+val hasReleaseSigningProperties = releaseSigningPropertiesFile.isFile
+
+if (hasReleaseSigningProperties) {
+    releaseSigningPropertiesFile.inputStream().use(releaseSigningProperties::load)
+}
+
+fun releaseSigningProperty(name: String): String =
+    releaseSigningProperties.getProperty(name)
+        ?: throw GradleException("Missing release signing property: $name")
+
 android {
-    namespace = "com.yogi.chucknorris"
+    namespace = "com.yogi.quotebattleroyal"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.yogi.chucknorris"
+        applicationId = "com.yogi.quotebattleroyal"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.3.8"
+        versionCode = 16
+        versionName = "1.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -37,6 +56,25 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigningProperties) {
+                storeFile = file(releaseSigningProperty("storeFile"))
+                storePassword = releaseSigningProperty("storePassword")
+                keyAlias = releaseSigningProperty("keyAlias")
+                keyPassword = releaseSigningProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            if (hasReleaseSigningProperties) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 }
 
