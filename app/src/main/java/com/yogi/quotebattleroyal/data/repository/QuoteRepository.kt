@@ -12,7 +12,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import java.util.EnumMap
 import java.util.UUID
@@ -20,10 +22,17 @@ import java.util.UUID
 class QuoteRepository(
     private val factService: FactService,
     private val prefetchScope: CoroutineScope? = null,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : QuoteDataSource {
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    prefetchEnabled: Boolean = false
+) : QuoteDataSource, AutoCloseable {
     private val prefetchLock = Any()
     private val prefetchedQuotes = EnumMap<FactSource, Deferred<Quote>>(FactSource::class.java)
+    private val ownedPrefetchScope = if (prefetchEnabled && prefetchScope == null) {
+        CoroutineScope(SupervisorJob() + dispatcher)
+    } else {
+        null
+    }
+    private val activePrefetchScope = prefetchScope ?: ownedPrefetchScope
 
     init {
         prefetchAllSources()
@@ -132,7 +141,7 @@ class QuoteRepository(
     }
 
     private fun prefetchSource(source: FactSource) {
-        val scope = prefetchScope ?: return
+        val scope = activePrefetchScope ?: return
         synchronized(prefetchLock) {
             if (prefetchedQuotes[source] == null) {
                 prefetchedQuotes[source] = scope.async(dispatcher) {
@@ -154,6 +163,13 @@ class QuoteRepository(
             if (prefetchedQuotes[source] === prefetched) {
                 prefetchedQuotes.remove(source)
             }
+        }
+    }
+
+    override fun close() {
+        ownedPrefetchScope?.cancel()
+        synchronized(prefetchLock) {
+            prefetchedQuotes.clear()
         }
     }
 }

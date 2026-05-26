@@ -196,7 +196,11 @@ class QuoteViewModel(
         _selectedPeriod.value = period
     }
 
-    // Add this Factory block
+    override fun onCleared() {
+        (quoteRepository as? AutoCloseable)?.close()
+        super.onCleared()
+    }
+
     companion object {
         fun provideFactory(
             repository: QuoteDataSource,
