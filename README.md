@@ -94,7 +94,7 @@ ads, or local account access.
 ## Latest Published Release
 
 - Version: `1.4.0`
-- APK SHA-256: `13e262067e9b48861a81bc5514b908df962f0ecd9dbbb7a5324564675a14fa3f`
+- APK SHA-256: recorded on the GitHub release asset.
 
 ## License
 
