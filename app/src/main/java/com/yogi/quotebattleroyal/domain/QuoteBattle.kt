@@ -12,6 +12,7 @@ enum class BattleWinner {
     CHUCK,
     CAT,
     DOG,
+    YOGI,
     DRAW
 }
 
@@ -23,7 +24,8 @@ enum class FactSource(
 ) {
     CHUCK(BattleWinner.CHUCK, "Chuck Norris", "Chuck", "CH"),
     CAT(BattleWinner.CAT, "Cat Fact", "Cat", "CA"),
-    DOG(BattleWinner.DOG, "Dog Fact", "Dog", "DO")
+    DOG(BattleWinner.DOG, "Dog Fact", "Dog", "DO"),
+    YOGI(BattleWinner.YOGI, "Yogi", "Yogi", "YG")
 }
 
 data class BattleContender(
@@ -46,6 +48,9 @@ data class BattleRound(
 
     val dog: BattleContender
         get() = contenderFor(FactSource.DOG)
+
+    val yogi: BattleContender
+        get() = contenderFor(FactSource.YOGI)
 
     val contenders: List<BattleContender>
         get() = listOf(first, second)
@@ -93,15 +98,17 @@ data class BattleScore(
     val chuckWins: Int = 0,
     val catWins: Int = 0,
     val dogWins: Int = 0,
+    val yogiWins: Int = 0,
     val draws: Int = 0
 ) {
-    val totalBattles: Int = chuckWins + catWins + dogWins + draws
+    val totalBattles: Int = chuckWins + catWins + dogWins + yogiWins + draws
     val leader: BattleWinner
         get() {
             val wins = mapOf(
                 BattleWinner.CHUCK to chuckWins,
                 BattleWinner.CAT to catWins,
-                BattleWinner.DOG to dogWins
+                BattleWinner.DOG to dogWins,
+                BattleWinner.YOGI to yogiWins
             )
             val topScore = wins.values.maxOrNull() ?: 0
             return if (topScore == 0 || wins.values.count { it == topScore } > 1) {
@@ -112,7 +119,7 @@ data class BattleScore(
         }
     val leaderMargin: Int
         get() {
-            val orderedScores = listOf(chuckWins, catWins, dogWins).sortedDescending()
+            val orderedScores = listOf(chuckWins, catWins, dogWins, yogiWins).sortedDescending()
             return if (leader == BattleWinner.DRAW) 0 else orderedScores[0] - orderedScores[1]
         }
 
@@ -121,6 +128,7 @@ data class BattleScore(
             BattleWinner.CHUCK -> copy(chuckWins = chuckWins + 1)
             BattleWinner.CAT -> copy(catWins = catWins + 1)
             BattleWinner.DOG -> copy(dogWins = dogWins + 1)
+            BattleWinner.YOGI -> copy(yogiWins = yogiWins + 1)
             BattleWinner.DRAW -> copy(draws = draws + 1)
         }
     }

@@ -5,7 +5,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,11 +54,10 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            val systemDarkTheme = isSystemInDarkTheme()
             var darkThemeOverride by remember {
                 mutableStateOf(themePreferenceStore.darkThemeOverride)
             }
-            val isDarkTheme = darkThemeOverride ?: systemDarkTheme
+            val isDarkTheme = darkThemeOverride ?: true
 
             SideEffect {
                 val systemBarStyle = if (isDarkTheme) {

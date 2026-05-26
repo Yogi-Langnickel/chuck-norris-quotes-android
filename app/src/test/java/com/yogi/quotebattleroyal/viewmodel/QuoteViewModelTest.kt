@@ -155,6 +155,43 @@ class QuoteViewModelTest {
     }
 
     @Test
+    fun fetchRandomYogiQuote_emitsLoadingThenSuccess() = runTest {
+        val yogiQuote = Quote("yogi-1", "Yogi says ship the useful part first.", "Yogi")
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(yogiQuoteResult = Result.success(yogiQuote)),
+            FakeBattleScoreStore()
+        )
+
+        viewModel.recordQuoteStates { states ->
+            viewModel.fetchRandomYogiQuote()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(QuoteUiState.Loading, QuoteUiState.Success(yogiQuote)),
+                states
+            )
+        }
+    }
+
+    @Test
+    fun fetchRandomYogiQuote_emitsLoadingThenErrorWhenApiFails() = runTest {
+        val viewModel = QuoteViewModel(
+            FakeQuoteDataSource(yogiQuoteResult = Result.failure(RuntimeException("Yogi failed"))),
+            FakeBattleScoreStore()
+        )
+
+        viewModel.recordQuoteStates { states ->
+            viewModel.fetchRandomYogiQuote()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(QuoteUiState.Loading, QuoteUiState.Error(QuoteRequest.YOGI_QUOTE)),
+                states
+            )
+        }
+    }
+
+    @Test
     fun showOrFetchRandomQuote_reusesCachedStandaloneQuote() = runTest {
         val chuckQuote = Quote("chuck-1", "Chuck Norris can divide by zero.", "Chuck Norris")
         val dataSource = FakeQuoteDataSource(quoteResult = Result.success(chuckQuote))
@@ -185,6 +222,40 @@ class QuoteViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, dataSource.quoteRequestCount)
+        assertEquals(QuoteUiState.Success(secondQuote), viewModel.quoteUiState.value)
+    }
+
+    @Test
+    fun showOrFetchRandomYogiQuote_reusesCachedStandaloneQuote() = runTest {
+        val yogiQuote = Quote("yogi-1", "Yogi says ship the useful part first.", "Yogi")
+        val dataSource = FakeQuoteDataSource(yogiQuoteResult = Result.success(yogiQuote))
+        val viewModel = QuoteViewModel(dataSource, FakeBattleScoreStore())
+
+        viewModel.showOrFetchRandomYogiQuote()
+        advanceUntilIdle()
+        viewModel.fetchBattleRound()
+        advanceUntilIdle()
+        viewModel.showOrFetchRandomYogiQuote()
+        advanceUntilIdle()
+
+        assertEquals(1, dataSource.yogiQuoteRequestCount)
+        assertEquals(QuoteUiState.Success(yogiQuote), viewModel.quoteUiState.value)
+    }
+
+    @Test
+    fun retryQuoteLoad_retriesYogiRequest() = runTest {
+        val firstFailure = Result.failure<Quote>(RuntimeException("Yogi failed"))
+        val secondQuote = Quote("yogi-2", "Yogi recovered quickly.", "Yogi")
+        val dataSource = FakeQuoteDataSource(yogiQuoteResult = firstFailure)
+        val viewModel = QuoteViewModel(dataSource, FakeBattleScoreStore())
+
+        viewModel.fetchRandomYogiQuote()
+        advanceUntilIdle()
+        dataSource.yogiQuoteResult = Result.success(secondQuote)
+        viewModel.retryQuoteLoad(QuoteRequest.YOGI_QUOTE)
+        advanceUntilIdle()
+
+        assertEquals(2, dataSource.yogiQuoteRequestCount)
         assertEquals(QuoteUiState.Success(secondQuote), viewModel.quoteUiState.value)
     }
 
@@ -381,6 +452,9 @@ class QuoteViewModelTest {
         var dogFactResult: Result<Quote> = Result.success(
             Quote("dog-default", "Dogs have a strong sense of smell.", "Dog Fact")
         ),
+        var yogiQuoteResult: Result<Quote> = Result.success(
+            Quote("yogi-default", "Yogi says ship the useful part first.", "Yogi")
+        ),
         var battleRoundResult: Result<BattleRound> = Result.success(
             BattleRound.from(
                 Quote("chuck-battle", "Chuck Norris can divide by zero.", "Chuck Norris"),
@@ -391,6 +465,7 @@ class QuoteViewModelTest {
         var quoteRequestCount = 0
         var catFactRequestCount = 0
         var dogFactRequestCount = 0
+        var yogiQuoteRequestCount = 0
 
         override suspend fun getRandomQuote(): Quote {
             quoteRequestCount++
@@ -407,6 +482,11 @@ class QuoteViewModelTest {
             return dogFactResult.getOrThrow()
         }
 
+        override suspend fun getRandomYogiQuote(): Quote {
+            yogiQuoteRequestCount++
+            return yogiQuoteResult.getOrThrow()
+        }
+
         override suspend fun getBattleRound(): BattleRound = battleRoundResult.getOrThrow()
         override suspend fun getBattleChallenger(excludedSources: Set<FactSource>): BattleContender {
             val source = FactSource.entries.first { it !in excludedSources }
@@ -414,6 +494,7 @@ class QuoteViewModelTest {
                 FactSource.CHUCK -> quoteResult.getOrThrow()
                 FactSource.CAT -> catFactResult.getOrThrow()
                 FactSource.DOG -> dogFactResult.getOrThrow()
+                FactSource.YOGI -> yogiQuoteResult.getOrThrow()
             }
             return BattleContender(source, quote, QuotePowerProfile.from(quote.value))
         }
@@ -429,6 +510,9 @@ class QuoteViewModelTest {
         private val dogFact: CompletableDeferred<Quote> = CompletableDeferred(
             Quote("dog-default", "Dogs have a strong sense of smell.", "Dog Fact")
         ),
+        private val yogiQuote: CompletableDeferred<Quote> = CompletableDeferred(
+            Quote("yogi-default", "Yogi says ship the useful part first.", "Yogi")
+        ),
         private val battleRound: CompletableDeferred<BattleRound> = CompletableDeferred(
             BattleRound.from(
                 Quote("chuck-battle", "Chuck Norris can divide by zero.", "Chuck Norris"),
@@ -439,6 +523,7 @@ class QuoteViewModelTest {
         override suspend fun getRandomQuote(): Quote = quote.await()
         override suspend fun getRandomCatFact(): Quote = catFact.await()
         override suspend fun getRandomDogFact(): Quote = dogFact.await()
+        override suspend fun getRandomYogiQuote(): Quote = yogiQuote.await()
         override suspend fun getBattleRound(): BattleRound = battleRound.await()
         override suspend fun getBattleChallenger(excludedSources: Set<FactSource>): BattleContender {
             val source = FactSource.entries.first { it !in excludedSources }
@@ -446,6 +531,7 @@ class QuoteViewModelTest {
                 FactSource.CHUCK -> quote.await()
                 FactSource.CAT -> catFact.await()
                 FactSource.DOG -> dogFact.await()
+                FactSource.YOGI -> yogiQuote.await()
             }
             return BattleContender(source, quote, QuotePowerProfile.from(quote.value))
         }

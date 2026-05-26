@@ -56,6 +56,12 @@ class QuoteRepository(
         }
     }
 
+    override suspend fun getRandomYogiQuote(): Quote {
+        return withContext(dispatcher) {
+            quoteForSourceWithPrefetch(FactSource.YOGI)
+        }
+    }
+
     override suspend fun getBattleRound(): BattleRound {
         return withContext(dispatcher) {
             val first = battleContender(excludedSources = emptySet())
@@ -127,6 +133,7 @@ class QuoteRepository(
             FactSource.CHUCK -> factService.getRandomJoke()
             FactSource.CAT -> factService.getRandomCatFact()
             FactSource.DOG -> factService.getRandomDogFact()
+            FactSource.YOGI -> factService.getRandomYogiQuote()
         }
 
         return Quote(

@@ -4,4 +4,5 @@ interface FactService {
     suspend fun getRandomJoke(): String
     suspend fun getRandomCatFact(): String
     suspend fun getRandomDogFact(): String
+    suspend fun getRandomYogiQuote(): String
 }

@@ -31,6 +31,7 @@ class AndroidBattleScoreStore(
                 .putInt("$key.chuck", nextScore.chuckWins)
                 .putInt("$key.cat", nextScore.catWins)
                 .putInt("$key.dog", nextScore.dogWins)
+                .putInt("$key.yogi", nextScore.yogiWins)
                 .putInt("$key.draw", nextScore.draws)
                 .apply()
         }
@@ -42,6 +43,7 @@ class AndroidBattleScoreStore(
             chuckWins = sharedPreferences.getInt("$key.chuck", 0),
             catWins = sharedPreferences.getInt("$key.cat", 0),
             dogWins = sharedPreferences.getInt("$key.dog", 0),
+            yogiWins = sharedPreferences.getInt("$key.yogi", 0),
             draws = sharedPreferences.getInt("$key.draw", 0)
         )
     }

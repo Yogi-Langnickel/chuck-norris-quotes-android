@@ -13,9 +13,12 @@ class ApiService(
     private val chuckRateLimiter: StreamRateLimiter = StreamRateLimiter(),
     private val catRateLimiter: StreamRateLimiter = StreamRateLimiter(),
     private val dogRateLimiter: StreamRateLimiter = StreamRateLimiter(),
-    private val dogProviderTimeoutMs: Long = 4_500
+    private val yogiRateLimiter: StreamRateLimiter = StreamRateLimiter(),
+    private val dogProviderTimeoutMs: Long = 4_500,
+    private val yogiProviderTimeoutMs: Long = 4_500
 ) : FactService {
     private var nextCatProvider = CatFactProvider.CATFACT_NINJA
+    private var nextYogiProvider = YogiProvider.ADVICE_SLIP
     private var nextEmergencyDogFactIndex = 0
 
     override suspend fun getRandomJoke(): String {
@@ -79,6 +82,33 @@ class ApiService(
         }
 
         throw FactServiceException("Dog fact providers are unavailable right now.", lastError)
+    }
+
+    override suspend fun getRandomYogiQuote(): String {
+        yogiRateLimiter.checkRequestAllowed("Ask Yogi")
+        val providers = rotatedYogiProviders()
+        var lastError: Throwable? = null
+
+        providers.forEach { provider ->
+            try {
+                return withTimeout(yogiProviderTimeoutMs) {
+                    when (provider) {
+                        YogiProvider.ADVICE_SLIP -> getAdviceSlip()
+                        YogiProvider.ICANHAZ_DAD_JOKE -> getIcanhazDadJoke()
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                lastError = e
+            } catch (e: FactServiceException) {
+                lastError = e
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                lastError = e
+            }
+        }
+
+        return YOGI_API_FALLBACK
     }
 
     private suspend fun getDogApiV2Fact(): String {
@@ -151,6 +181,34 @@ class ApiService(
         }
     }
 
+    private suspend fun getAdviceSlip(): String {
+        val response = client.get("https://api.adviceslip.com/advice")
+        if (response.status == HttpStatusCode.OK) {
+            val advice: AdviceSlipResponse = response.body()
+            return cleanYogiText(
+                advice.slip?.advice,
+                "Advice Slip returned an empty response."
+            )
+        } else {
+            throw FactServiceException("Advice Slip failed with status ${response.status.value}.")
+        }
+    }
+
+    private suspend fun getIcanhazDadJoke(): String {
+        val response = client.get("https://icanhazdadjoke.com/") {
+            header(HttpHeaders.Accept, ContentType.Application.Json.toString())
+        }
+        if (response.status == HttpStatusCode.OK) {
+            val joke: IcanhazDadJokeResponse = response.body()
+            return cleanYogiText(
+                joke.joke,
+                "I Can Haz Dad Joke returned an empty joke."
+            )
+        } else {
+            throw FactServiceException("I Can Haz Dad Joke failed with status ${response.status.value}.")
+        }
+    }
+
     @Synchronized
     private fun nextCatFactProvider(): CatFactProvider {
         return nextCatProvider.also { current ->
@@ -161,9 +219,44 @@ class ApiService(
         }
     }
 
+    @Synchronized
+    private fun rotatedYogiProviders(): List<YogiProvider> {
+        val start = nextYogiProvider
+        val providers = YogiProvider.entries
+        nextYogiProvider = providers[(start.ordinal + 1) % providers.size]
+        return providers.drop(start.ordinal) + providers.take(start.ordinal)
+    }
+
+    private fun cleanYogiText(value: String?, emptyMessage: String): String {
+        val normalized = value
+            ?.trim()
+            ?.replace(whitespace, " ")
+            ?: throw FactServiceException(emptyMessage)
+
+        if (normalized.isBlank()) {
+            throw FactServiceException(emptyMessage)
+        }
+        if (normalized.length > MAX_YOGI_TEXT_LENGTH) {
+            throw FactServiceException("Ask Yogi returned an oversized response.")
+        }
+        if (normalized.any { it.isISOControl() || Character.getType(it) == Character.FORMAT.toInt() }) {
+            throw FactServiceException("Ask Yogi returned unsupported control characters.")
+        }
+        if (unsafeYogiFragments.any { normalized.contains(it, ignoreCase = true) }) {
+            throw FactServiceException("Ask Yogi returned content outside the app tone.")
+        }
+
+        return normalized
+    }
+
     private enum class CatFactProvider {
         CATFACT_NINJA,
         MEOWFACTS
+    }
+
+    private enum class YogiProvider {
+        ADVICE_SLIP,
+        ICANHAZ_DAD_JOKE
     }
 
     private enum class DogFactProvider {
@@ -180,6 +273,16 @@ class ApiService(
     }
 
     private companion object {
+        private const val MAX_YOGI_TEXT_LENGTH = 280
+        private const val YOGI_API_FALLBACK = "Even monkeys need a break sometimes. (API Error)"
+        val whitespace = Regex("\\s+")
+        val unsafeYogiFragments = listOf(
+            "kill yourself",
+            "kys",
+            "rape",
+            "nazi",
+            "hitler"
+        )
         val emergencyDogFacts = listOf(
             "Dogs have a sense of smell far stronger than humans.",
             "Dogs can learn more than 100 words and gestures.",
@@ -223,4 +326,18 @@ data class DogFactAttributes(
 data class KinduffDogFactResponse(
     val facts: List<String> = emptyList(),
     val success: Boolean = false
+)
+
+data class AdviceSlipResponse(
+    val slip: AdviceSlip? = null
+)
+
+data class AdviceSlip(
+    val advice: String? = null
+)
+
+data class IcanhazDadJokeResponse(
+    val id: String? = null,
+    val joke: String? = null,
+    val status: Int? = null
 )

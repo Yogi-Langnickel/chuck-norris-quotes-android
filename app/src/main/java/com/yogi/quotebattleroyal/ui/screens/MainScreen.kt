@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -64,19 +65,60 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var selectedTab by remember { mutableStateOf(AppTab.BATTLE) }
+    var isAskYogiSelected by remember { mutableStateOf(false) }
     val copiedMessage = stringResource(R.string.quote_copied)
     val shareUnavailableMessage = stringResource(R.string.share_unavailable)
     val shareChooserTitle = stringResource(R.string.share_chooser_title)
     val updateUnavailableMessage = stringResource(R.string.update_unavailable)
     val latestReleaseUrl = stringResource(R.string.latest_release_url)
 
-    LaunchedEffect(selectedTab) {
-        when (selectedTab) {
-            AppTab.BATTLE -> if (battleRound == null) quoteViewModel.fetchBattleRound()
-            AppTab.CHUCK -> quoteViewModel.showOrFetchRandomQuote()
-            AppTab.CAT -> quoteViewModel.showOrFetchRandomCatFact()
-            AppTab.DOG -> quoteViewModel.showOrFetchRandomDogFact()
+    LaunchedEffect(selectedTab, isAskYogiSelected) {
+        when {
+            isAskYogiSelected -> quoteViewModel.showOrFetchRandomYogiQuote()
+            selectedTab == AppTab.BATTLE -> if (battleRound == null) quoteViewModel.fetchBattleRound()
+            selectedTab == AppTab.CHUCK -> quoteViewModel.showOrFetchRandomQuote()
+            selectedTab == AppTab.CAT -> quoteViewModel.showOrFetchRandomCatFact()
+            selectedTab == AppTab.DOG -> quoteViewModel.showOrFetchRandomDogFact()
         }
+    }
+
+    fun selectTab(tab: AppTab) {
+        selectedTab = tab
+        isAskYogiSelected = false
+    }
+
+    fun showAskYogi() {
+        isAskYogiSelected = true
+    }
+
+    @Composable
+    fun AskYogiContent() {
+        FactTabContent(
+            quoteUiState = quoteUiState,
+            expectedRequest = QuoteRequest.YOGI_QUOTE,
+            expectedSourceLabel = "Yogi",
+            attributionText = stringResource(R.string.yogi_api_attribution),
+            isQuoteLoading = isQuoteLoading,
+            loadingLabel = stringResource(R.string.loading_yogi),
+            onRefresh = quoteViewModel::fetchRandomYogiQuote,
+            onRetry = { quoteViewModel.retryQuoteLoad(QuoteRequest.YOGI_QUOTE) },
+            onCopy = { quoteData ->
+                clipboardManager.setText(AnnotatedString(quoteData.value))
+                scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
+            },
+            onShare = { quoteData ->
+                shareQuote(
+                    quote = quoteData.value,
+                    chooserTitle = shareChooserTitle,
+                    context = context,
+                    onShareUnavailable = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(shareUnavailableMessage)
+                        }
+                    }
+                )
+            }
+        )
     }
 
     Scaffold(
@@ -151,26 +193,25 @@ fun MainScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 28.dp)
             ) {
-                PrimaryTabRow(selectedTabIndex = selectedTab.ordinal) {
-                    AppTab.entries.forEach { tab ->
-                        Tab(
-                            selected = selectedTab == tab,
-                            onClick = { selectedTab = tab },
-                            text = {
-                                Text(
-                                    when (tab) {
-                                        AppTab.BATTLE -> stringResource(R.string.tab_battle_mode)
-                                        AppTab.CHUCK -> stringResource(R.string.tab_chuck_facts)
-                                        AppTab.CAT -> stringResource(R.string.tab_cat_facts)
-                                        AppTab.DOG -> stringResource(R.string.tab_dog_facts)
-                                    }
-                                )
-                            }
-                        )
+                FixedTabRow(
+                    selectedTab = selectedTab,
+                    isAskYogiSelected = isAskYogiSelected,
+                    onTabSelected = ::selectTab
+                )
+
+                if (!isAskYogiSelected) {
+                    Button(
+                        onClick = ::showAskYogi,
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        colors = ButtonDefaults.filledTonalButtonColors()
+                    ) {
+                        Text(stringResource(R.string.tab_ask_yogi))
                     }
                 }
 
-                when (selectedTab) {
+                if (isAskYogiSelected) {
+                    AskYogiContent()
+                } else when (selectedTab) {
                     AppTab.BATTLE -> {
                         BattleArena(
                             battleRound = battleRound,
@@ -270,6 +311,63 @@ fun MainScreen(
                         }
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FixedTabRow(
+    selectedTab: AppTab,
+    isAskYogiSelected: Boolean,
+    onTabSelected: (AppTab) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            AppTab.entries.forEach { tab ->
+                val isSelected = !isAskYogiSelected && selectedTab == tab
+                TextButton(
+                    onClick = { onTabSelected(tab) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                ) {
+                    Text(
+                        text = when (tab) {
+                            AppTab.BATTLE -> stringResource(R.string.tab_battle_mode)
+                            AppTab.CHUCK -> stringResource(R.string.tab_chuck_facts)
+                            AppTab.CAT -> stringResource(R.string.tab_cat_facts)
+                            AppTab.DOG -> stringResource(R.string.tab_dog_facts)
+                        },
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth()) {
+            AppTab.entries.forEach { tab ->
+                val isSelected = !isAskYogiSelected && selectedTab == tab
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(3.dp)
+                        .padding(horizontal = 28.dp)
+                        .background(
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                            shape = MaterialTheme.shapes.extraSmall
+                        )
+                )
             }
         }
     }
@@ -419,6 +517,7 @@ private fun QuoteErrorCard(
                     QuoteRequest.CHUCK_QUOTE -> stringResource(R.string.quote_error_chuck)
                     QuoteRequest.CAT_FACT -> stringResource(R.string.quote_error_cat)
                     QuoteRequest.DOG_FACT -> stringResource(R.string.quote_error_dog)
+                    QuoteRequest.YOGI_QUOTE -> stringResource(R.string.quote_error_yogi)
                     QuoteRequest.BATTLE_ROUND -> stringResource(R.string.quote_error_battle)
                 },
                 style = MaterialTheme.typography.bodyLarge,

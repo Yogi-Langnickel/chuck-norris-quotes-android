@@ -27,6 +27,7 @@ enum class QuoteRequest {
     CHUCK_QUOTE,
     CAT_FACT,
     DOG_FACT,
+    YOGI_QUOTE,
     BATTLE_ROUND
 }
 
@@ -82,6 +83,14 @@ class QuoteViewModel(
 
     fun showOrFetchRandomDogFact() {
         showCachedStandaloneQuote(QuoteRequest.DOG_FACT, ::fetchRandomDogFact)
+    }
+
+    fun fetchRandomYogiQuote() {
+        fetchStandaloneQuote(QuoteRequest.YOGI_QUOTE) { quoteRepository.getRandomYogiQuote() }
+    }
+
+    fun showOrFetchRandomYogiQuote() {
+        showCachedStandaloneQuote(QuoteRequest.YOGI_QUOTE, ::fetchRandomYogiQuote)
     }
 
     private fun showCachedStandaloneQuote(
@@ -188,6 +197,7 @@ class QuoteViewModel(
             QuoteRequest.CHUCK_QUOTE -> fetchRandomQuote()
             QuoteRequest.CAT_FACT -> fetchRandomCatFact()
             QuoteRequest.DOG_FACT -> fetchRandomDogFact()
+            QuoteRequest.YOGI_QUOTE -> fetchRandomYogiQuote()
             QuoteRequest.BATTLE_ROUND -> fetchBattleRound()
         }
     }

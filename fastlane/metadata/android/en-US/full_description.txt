@@ -1,4 +1,4 @@
-Welcome to Quote Battle Royal! This application fetches random Chuck Norris quotes, cat facts, and dog facts from public APIs, then displays them in a user-friendly interface.
+Welcome to Quote Battle Royal! This application fetches random Chuck Norris quotes, cat facts, dog facts, advice slips, and dad jokes from public APIs, then turns them into quick swipeable battles.
 
 With a clean and modern design, the app utilizes Jetpack Compose for a responsive UI and follows the MVVM architecture for maintainability and scalability.
 
@@ -6,17 +6,19 @@ Key Features:
 - Fetch random Chuck Norris quotes with a simple tap.
 - Fetch random cat facts from rotating public sources.
 - Fetch random dog facts from Dog API with backup providers so dog outages do not block the Dog tab or battles.
+- Ask Yogi for rotating advice and dad jokes.
 - Start a quote battle, swipe away the loser, and track daily, weekly, and monthly local scores.
 - Bring in the next challenger from a random non-winner fact stream, with fallback if an API fails.
+- Keep one prefetched fact per stream so battles and tabs feel faster.
 - Enjoy smoother battle swipes with spring settling, continuous loser exit motion, and no card tilt.
-- See Chuck, Cat, and Dog celebrate with source-specific victory animations when they win.
+- See winners land with a Victory Stamp and a Champion Podium scoreboard.
 - Follow the current champion streak as one source keeps defending the battle arena.
-- Switch between dedicated Battle Mode, Chuck Facts, Cat Facts, and Dog Facts tabs.
+- Switch between dedicated Battle Mode, Chuck Facts, Cat Facts, Dog Facts, and Ask Yogi views.
 - Dog facts are powered by Stratonauts Dog API.
 - Open the latest GitHub release from a top-bar action for easier manual updates.
-- Switch between persistent light and dark themes.
+- Start in dark mode and switch between persistent light and dark themes.
 - Copy or share the current quote or fact.
 - Beautifully designed UI using Jetpack Compose.
 - Built with Kotlin for a seamless Android experience.
 
-Join us in celebrating the legendary Chuck Norris with this fun and entertaining app!
+No login, payments, ads, analytics, or account setup required.

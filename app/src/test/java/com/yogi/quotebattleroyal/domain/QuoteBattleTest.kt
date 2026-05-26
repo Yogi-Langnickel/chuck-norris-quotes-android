@@ -32,14 +32,16 @@ class QuoteBattleTest {
             .record(BattleWinner.CHUCK)
             .record(BattleWinner.CAT)
             .record(BattleWinner.DOG)
+            .record(BattleWinner.YOGI)
             .record(BattleWinner.DRAW)
             .record(BattleWinner.CHUCK)
 
         assertEquals(2, score.chuckWins)
         assertEquals(1, score.catWins)
         assertEquals(1, score.dogWins)
+        assertEquals(1, score.yogiWins)
         assertEquals(1, score.draws)
-        assertEquals(5, score.totalBattles)
+        assertEquals(6, score.totalBattles)
     }
 
     @Test
@@ -59,7 +61,11 @@ class QuoteBattleTest {
         assertEquals(BattleWinner.DOG, dogLead.leader)
         assertEquals(4, dogLead.leaderMargin)
 
-        val tied = BattleScore(chuckWins = 2, catWins = 2, dogWins = 1, draws = 1)
+        val yogiLead = BattleScore(chuckWins = 2, catWins = 1, dogWins = 3, yogiWins = 7)
+        assertEquals(BattleWinner.YOGI, yogiLead.leader)
+        assertEquals(4, yogiLead.leaderMargin)
+
+        val tied = BattleScore(chuckWins = 2, catWins = 2, dogWins = 1, yogiWins = 1, draws = 1)
         assertEquals(BattleWinner.DRAW, tied.leader)
         assertEquals(0, tied.leaderMargin)
     }
@@ -70,8 +76,9 @@ class QuoteBattleTest {
             .record(FactSource.CHUCK)
             .record(FactSource.CHUCK)
             .record(FactSource.CAT)
+            .record(FactSource.YOGI)
 
-        assertEquals(FactSource.CAT, streak.champion)
+        assertEquals(FactSource.YOGI, streak.champion)
         assertEquals(1, streak.wins)
         assertTrue(streak.isActive)
     }
@@ -105,5 +112,24 @@ class QuoteBattleTest {
         assertEquals(dog, round.loserFor(BattleWinner.CAT))
         assertEquals(null, round.loserFor(BattleWinner.CHUCK))
         assertEquals(null, round.loserFor(BattleWinner.DRAW))
+    }
+
+    @Test
+    fun battleRound_loserForReturnsNonWinningYogiCapableContender() {
+        val chuck = BattleContender(
+            FactSource.CHUCK,
+            Quote("chuck", "Chuck Norris can divide by zero.", "Chuck Norris"),
+            QuotePowerProfile.from("Chuck Norris can divide by zero.")
+        )
+        val yogi = BattleContender(
+            FactSource.YOGI,
+            Quote("yogi", "Yogi says ship the useful part first.", "Yogi"),
+            QuotePowerProfile.from("Yogi says ship the useful part first.")
+        )
+        val round = BattleRound.from(chuck, yogi)
+
+        assertEquals(chuck, round.loserFor(BattleWinner.YOGI))
+        assertEquals(yogi, round.loserFor(BattleWinner.CHUCK))
+        assertEquals(null, round.loserFor(BattleWinner.CAT))
     }
 }

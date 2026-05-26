@@ -7,6 +7,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -46,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -68,6 +71,21 @@ import com.yogi.quotebattleroyal.domain.FactSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private val ProposalPanel = Color(0xFF1B1F22)
+private val ProposalPhone = Color(0xFF111516)
+private val ProposalTile = Color(0xFF20272B)
+private val ProposalLine = Color(0xFF333B40)
+private val ProposalPhoneLine = Color(0xFF3B4449)
+private val ProposalTileLine = Color(0xFF354047)
+private val ProposalAvatar = Color(0xFF2B3338)
+private val ProposalAvatarLine = Color(0xFF465158)
+private val ProposalText = Color(0xFFF2F4F3)
+private val ProposalMuted = Color(0xFFA9B2AD)
+private val ProposalYogi = Color(0xFFD7A6FF)
+private val ProposalWin = Color(0xFF8FF0B0)
+private val ProposalPodiumStart = Color(0xFF3D3549)
+private val ProposalPodiumEnd = Color(0xFF202F29)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BattleArena(
@@ -89,7 +107,7 @@ fun BattleArena(
 
     LaunchedEffect(battleRound?.first?.quote?.id, battleRound?.second?.quote?.id, selectedWinner) {
         if (selectedWinner != null && selectedWinner != BattleWinner.DRAW) {
-            delay(550)
+            delay(620)
             onLoserSwipedAway()
         }
     }
@@ -128,12 +146,6 @@ fun BattleArena(
                 EmptyBattleState()
             }
         } else {
-            selectedWinner
-                ?.takeIf { it != BattleWinner.DRAW }
-                ?.let(battleRound::contenderFor)
-                ?.let { winningContender ->
-                    VictoryBanner(source = winningContender.source)
-                }
             BattleContenderCard(
                 contender = battleRound.first,
                 isWinner = selectedWinner == battleRound.first.source.winner,
@@ -204,39 +216,230 @@ private fun ChampionStreakText(streak: BattleStreak) {
 
 @Composable
 private fun ScoreStrip(period: BattlePeriod, score: BattleScore, streak: BattleStreak) {
-    Row(
+    val scoreEntries = remember(score) { score.toSourceScores() }
+    val leaderEntry = scoreEntries.firstOrNull()
+    val hasLeader = leaderEntry != null && score.leader != BattleWinner.DRAW && leaderEntry.wins > 0
+
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, ProposalPhoneLine),
+        tonalElevation = 1.dp,
+        color = ProposalPhone
     ) {
-        Text(
-            text = stringResource(R.string.personal_score_heading, period.label()),
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold
-        )
-        ChampionStreakText(streak = streak)
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.scoreboard_current_leader),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = ProposalMuted,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.scoreboard_daily_standings, period.label()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = ProposalMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            ChampionPodiumLeader(
+                leaderEntry = leaderEntry,
+                hasLeader = hasLeader,
+                leaderMargin = score.leaderMargin
+            )
+
+            MiniScoreGrid(
+                entries = scoreEntries.filter { it.source != leaderEntry?.source || !hasLeader }
+            )
+
+            ChampionStreakText(streak = streak)
+        }
     }
-    Row(
+}
+
+private data class SourceScore(
+    val source: FactSource,
+    val wins: Int
+)
+
+private fun BattleScore.toSourceScores(): List<SourceScore> {
+    return listOf(
+        SourceScore(FactSource.CHUCK, chuckWins),
+        SourceScore(FactSource.CAT, catWins),
+        SourceScore(FactSource.DOG, dogWins),
+        SourceScore(FactSource.YOGI, yogiWins)
+    ).sortedWith(
+        compareByDescending<SourceScore> { it.wins }
+            .thenBy { it.source.ordinal }
+    )
+}
+
+@Composable
+private fun ChampionPodiumLeader(
+    leaderEntry: SourceScore?,
+    hasLeader: Boolean,
+    leaderMargin: Int
+) {
+    val source = leaderEntry?.source
+    val title = if (hasLeader && source != null) {
+        "${source.scoreLabel} ${stringResource(R.string.scoreboard_leads)}"
+    } else if ((leaderEntry?.wins ?: 0) > 0) {
+        stringResource(R.string.scoreboard_tied_leader)
+    } else {
+        stringResource(R.string.scoreboard_no_leader)
+    }
+    val detail = if (hasLeader && leaderMargin > 0) {
+        stringResource(R.string.scoreboard_ahead_by, leaderMargin)
+    } else {
+        stringResource(R.string.scoreboard_no_margin)
+    }
+    val badgeText = if (hasLeader) source?.initials ?: "--" else "--"
+
+    Box(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        contentAlignment = Alignment.Center
     ) {
-        ScorePill(
-            label = stringResource(R.string.chuck_score),
-            value = score.chuckWins,
-            modifier = Modifier.weight(1f)
-        )
-        ScorePill(
-            label = stringResource(R.string.cat_score),
-            value = score.catWins,
-            modifier = Modifier.weight(1f)
-        )
-        ScorePill(
-            label = stringResource(R.string.dog_score),
-            value = score.dogWins,
-            modifier = Modifier.weight(1f)
-        )
+        val shape = RoundedCornerShape(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = if (hasLeader) {
+                        Brush.linearGradient(
+                            listOf(
+                                ProposalPodiumStart,
+                                ProposalPodiumEnd
+                            )
+                        )
+                    } else {
+                        Brush.linearGradient(listOf(ProposalPanel, ProposalPanel))
+                    },
+                    shape = shape
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (hasLeader) {
+                        ProposalYogi.copy(alpha = 0.55f)
+                    } else {
+                        ProposalLine
+                    },
+                    shape = shape
+                )
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                border = BorderStroke(1.dp, ProposalAvatarLine),
+                color = ProposalAvatar,
+                contentColor = if (hasLeader) {
+                    ProposalYogi
+                } else {
+                    ProposalMuted
+                }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .padding(6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = badgeText,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ProposalText,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = detail,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ProposalMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Text(
+                text = "${leaderEntry?.wins ?: 0}",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = ProposalText
+            )
+        }
+    }
+}
+
+@Composable
+private fun MiniScoreGrid(entries: List<SourceScore>) {
+    val rows = if (entries.size > 3) entries.chunked(2) else listOf(entries)
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        rows.forEach { rowEntries ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowEntries.forEach { entry ->
+                    MiniScoreTile(
+                        scoreEntry = entry,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (rowEntries.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniScoreTile(scoreEntry: SourceScore, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, ProposalTileLine),
+        color = ProposalTile
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = scoreEntry.source.scoreLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = ProposalMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "${scoreEntry.wins}",
+                style = MaterialTheme.typography.titleMedium,
+                color = ProposalText,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -257,33 +460,6 @@ private fun TieBreakButton(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(stringResource(R.string.tie_break_refresh_both))
-    }
-}
-
-@Composable
-private fun ScorePill(label: String, value: Int, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 2.dp,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
     }
 }
 
@@ -380,6 +556,7 @@ private fun VictoryBadge(source: FactSource, progress: Float) {
         FactSource.CHUCK -> primary
         FactSource.CAT -> tertiary
         FactSource.DOG -> secondary
+        FactSource.YOGI -> primary
     }
 
     Canvas(modifier = Modifier.size(64.dp)) {
@@ -417,6 +594,7 @@ private fun VictoryBadge(source: FactSource, progress: Float) {
             FactSource.CHUCK -> drawChuckCelebration(center, radius, ink, accent)
             FactSource.CAT -> drawCatCelebration(center, radius, ink, accent)
             FactSource.DOG -> drawDogCelebration(center, radius, ink, accent)
+            FactSource.YOGI -> drawYogiCelebration(center, radius, ink, accent)
         }
     }
 }
@@ -467,7 +645,7 @@ private fun BattleContenderCard(
     )
     val victoryProgress by animateFloatAsState(
         targetValue = if (isWinner) 1f else 0f,
-        animationSpec = tween(durationMillis = 1_000, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
         label = "victoryAnimation"
     )
     val loserSwipeProgress by animateFloatAsState(
@@ -593,84 +771,37 @@ private fun BattleContenderCard(
                 }
             }
         }
-        WinnerCelebration(
-            source = contender.source,
-            progress = victoryProgress
-        )
+        WinnerStamp(progress = victoryProgress)
     }
 }
 
 @Composable
-private fun BoxScope.WinnerCelebration(source: FactSource, progress: Float) {
+private fun BoxScope.WinnerStamp(progress: Float) {
     if (progress <= 0f) return
 
-    val primary = MaterialTheme.colorScheme.primary
-    val secondary = MaterialTheme.colorScheme.secondary
-    val tertiary = MaterialTheme.colorScheme.tertiary
-    val surface = MaterialTheme.colorScheme.surface
-    val ink = MaterialTheme.colorScheme.onSurface
-    val accent = when (source) {
-        FactSource.CHUCK -> primary
-        FactSource.CAT -> tertiary
-        FactSource.DOG -> secondary
-    }
-
-    Canvas(
+    Surface(
         modifier = Modifier
-            .matchParentSize()
-            .graphicsLayer { alpha = 0.95f }
+            .align(Alignment.TopEnd)
+            .padding(top = 30.dp, end = 18.dp)
+            .graphicsLayer {
+                alpha = progress
+                rotationZ = -8f
+                scaleX = 0.82f + progress * 0.18f
+                scaleY = 0.82f + progress * 0.18f
+            },
+        shape = RoundedCornerShape(6.dp),
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
+        contentColor = MaterialTheme.colorScheme.primary
     ) {
-        val burstAlpha = (1f - progress).coerceIn(0f, 0.82f)
-        val center = Offset(size.width - 60.dp.toPx(), 52.dp.toPx())
-        val bounce = kotlin.math.sin(progress * Math.PI).toFloat()
-        val mascotRadius = 26.dp.toPx() * (0.76f + 0.22f * bounce + 0.1f * progress)
-
-        repeat(16) { index ->
-            val angle = (index / 16f) * (Math.PI * 2).toFloat()
-            val distance = progress * size.minDimension * 0.44f
-            val start = Offset(
-                x = center.x + kotlin.math.cos(angle) * distance,
-                y = center.y + kotlin.math.sin(angle) * distance
-            )
-            val end = Offset(
-                x = start.x + kotlin.math.cos(angle) * 13.dp.toPx(),
-                y = start.y + kotlin.math.sin(angle) * 13.dp.toPx()
-            )
-            val color = when (index % 3) {
-                0 -> primary
-                1 -> secondary
-                else -> tertiary
-            }
-            drawLine(
-                color = color.copy(alpha = burstAlpha),
-                start = start,
-                end = end,
-                strokeWidth = 3.dp.toPx(),
-                cap = StrokeCap.Round
-            )
-        }
-
-        drawCircle(
-            color = accent.copy(alpha = 0.25f * (1f - progress * 0.2f)),
-            radius = mascotRadius * (1.45f + 0.28f * bounce),
-            center = center
+        Text(
+            text = stringResource(R.string.victory_stamp_label),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
-        drawCircle(
-            color = accent,
-            radius = mascotRadius,
-            center = center
-        )
-        drawCircle(
-            color = surface,
-            radius = mascotRadius * 0.78f,
-            center = center
-        )
-
-        when (source) {
-            FactSource.CHUCK -> drawChuckCelebration(center, mascotRadius, ink, accent)
-            FactSource.CAT -> drawCatCelebration(center, mascotRadius, ink, accent)
-            FactSource.DOG -> drawDogCelebration(center, mascotRadius, ink, accent)
-        }
     }
 }
 
@@ -768,6 +899,39 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDogCelebration(
         topLeft = center.copy(x = center.x - radius * 0.28f, y = center.y + radius * 0.08f),
         size = androidx.compose.ui.geometry.Size(radius * 0.56f, radius * 0.38f),
         style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+    )
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawYogiCelebration(
+    center: Offset,
+    radius: Float,
+    ink: Color,
+    accent: Color
+) {
+    drawCircle(ink, radius * 0.08f, center.copy(x = center.x - radius * 0.22f, y = center.y - radius * 0.08f))
+    drawCircle(ink, radius * 0.08f, center.copy(x = center.x + radius * 0.22f, y = center.y - radius * 0.08f))
+    drawArc(
+        color = ink,
+        startAngle = 20f,
+        sweepAngle = 140f,
+        useCenter = false,
+        topLeft = center.copy(x = center.x - radius * 0.28f, y = center.y + radius * 0.1f),
+        size = androidx.compose.ui.geometry.Size(radius * 0.56f, radius * 0.34f),
+        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+    )
+    drawLine(
+        color = accent,
+        start = center.copy(x = center.x - radius * 0.5f, y = center.y - radius * 0.72f),
+        end = center.copy(x = center.x + radius * 0.5f, y = center.y - radius * 0.72f),
+        strokeWidth = 3.dp.toPx(),
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = accent,
+        start = center.copy(x = center.x, y = center.y - radius * 0.95f),
+        end = center.copy(x = center.x, y = center.y - radius * 0.5f),
+        strokeWidth = 3.dp.toPx(),
+        cap = StrokeCap.Round
     )
 }
 

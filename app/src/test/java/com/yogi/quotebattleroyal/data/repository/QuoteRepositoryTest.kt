@@ -63,6 +63,21 @@ class QuoteRepositoryTest {
     }
 
     @Test
+    fun getRandomYogiQuote_returnsYogiSourceLabel() = runBlocking {
+        val repository = QuoteRepository(
+            fakeFactService(
+                yogiQuote = "Yogi says ship the useful part first."
+            )
+        )
+
+        val quote = repository.getRandomYogiQuote()
+
+        assertEquals("Yogi says ship the useful part first.", quote.value)
+        assertEquals("Yogi", quote.sourceLabel)
+        assertTrue(quote.id.isNotBlank())
+    }
+
+    @Test
     fun getBattleRound_returnsBothContendersWithPowerProfiles() = runBlocking {
         val repository = QuoteRepository(
             fakeFactService(
@@ -87,11 +102,28 @@ class QuoteRepositoryTest {
         val repository = QuoteRepository(
             fakeFactService(
                 catFactError = RuntimeException("Cat API failed"),
-                dogFact = "Dogs can understand human pointing gestures."
+                dogFact = "Dogs can understand human pointing gestures.",
+                yogiQuoteError = RuntimeException("Yogi API failed")
             )
         )
 
         val challenger = repository.getBattleChallenger(setOf(FactSource.CHUCK))
+
+        assertEquals(FactSource.DOG, challenger.source)
+        assertEquals("Dogs can understand human pointing gestures.", challenger.quote.value)
+    }
+
+    @Test
+    fun getBattleChallenger_excludesYogiAndFallsBackOnFailure() = runBlocking {
+        val repository = QuoteRepository(
+            fakeFactService(
+                jokeError = RuntimeException("Chuck API failed"),
+                catFactError = RuntimeException("Cat API failed"),
+                dogFact = "Dogs can understand human pointing gestures."
+            )
+        )
+
+        val challenger = repository.getBattleChallenger(setOf(FactSource.YOGI))
 
         assertEquals(FactSource.DOG, challenger.source)
         assertEquals("Dogs can understand human pointing gestures.", challenger.quote.value)
@@ -123,6 +155,34 @@ class QuoteRepositoryTest {
         val secondQuote = repository.getRandomQuote()
 
         assertEquals("Replacement Chuck quote.", secondQuote.value)
+    }
+
+    @Test
+    fun getRandomYogiQuote_usesOneSlotPrefetchAndRefillsAfterConsumption() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val factService = QueuedFactService(
+            yogiQuotes = mutableListOf(
+                "Buffered Yogi quote.",
+                "Replacement Yogi quote.",
+                "Next buffered Yogi quote."
+            )
+        )
+        val repository = QuoteRepository(
+            factService = factService,
+            prefetchScope = backgroundScope,
+            dispatcher = dispatcher
+        )
+        advanceUntilIdle()
+
+        val firstQuote = repository.getRandomYogiQuote()
+        advanceUntilIdle()
+
+        assertEquals("Buffered Yogi quote.", firstQuote.value)
+        assertEquals(2, factService.yogiRequestCount)
+
+        val secondQuote = repository.getRandomYogiQuote()
+
+        assertEquals("Replacement Yogi quote.", secondQuote.value)
     }
 
     @Test
@@ -166,13 +226,28 @@ class QuoteRepositoryTest {
         }
     }
 
+    @Test
+    fun getRandomYogiQuote_propagatesApiFailures() {
+        val repository = QuoteRepository(
+            fakeFactService(
+                yogiQuoteError = RuntimeException("Yogi API failed")
+            )
+        )
+
+        assertThrows(RuntimeException::class.java) {
+            runBlocking { repository.getRandomYogiQuote() }
+        }
+    }
+
     private fun fakeFactService(
         joke: String = "Chuck Norris can divide by zero.",
         jokeError: RuntimeException? = null,
         catFact: String = "Cats have excellent night vision.",
         catFactError: RuntimeException? = null,
         dogFact: String = "Dogs have a strong sense of smell.",
-        dogFactError: RuntimeException? = null
+        dogFactError: RuntimeException? = null,
+        yogiQuote: String = "Yogi says ship the useful part first.",
+        yogiQuoteError: RuntimeException? = null
     ) = object : FactService {
         override suspend fun getRandomJoke(): String {
             jokeError?.let { throw it }
@@ -188,14 +263,22 @@ class QuoteRepositoryTest {
             dogFactError?.let { throw it }
             return dogFact
         }
+
+        override suspend fun getRandomYogiQuote(): String {
+            yogiQuoteError?.let { throw it }
+            return yogiQuote
+        }
     }
 
     private class QueuedFactService(
         private val jokes: MutableList<String> = mutableListOf("Chuck Norris can divide by zero."),
         private val catFacts: MutableList<String> = mutableListOf("Cats have excellent night vision."),
-        private val dogFacts: MutableList<String> = mutableListOf("Dogs have a strong sense of smell.")
+        private val dogFacts: MutableList<String> = mutableListOf("Dogs have a strong sense of smell."),
+        private val yogiQuotes: MutableList<String> = mutableListOf("Yogi says ship the useful part first.")
     ) : FactService {
         var jokeRequestCount = 0
+            private set
+        var yogiRequestCount = 0
             private set
 
         override suspend fun getRandomJoke(): String {
@@ -209,6 +292,11 @@ class QuoteRepositoryTest {
 
         override suspend fun getRandomDogFact(): String {
             return dogFacts.removeFirst()
+        }
+
+        override suspend fun getRandomYogiQuote(): String {
+            yogiRequestCount++
+            return yogiQuotes.removeFirst()
         }
     }
 }
