@@ -22,6 +22,7 @@
     <string name="tab_chuck_facts">Chuck</string>
     <string name="tab_cat_facts">Cat</string>
     <string name="tab_dog_facts">Dog</string>
+    <string name="dog_api_attribution">Powered by Stratonauts Dog API</string>
     <string name="start_battle">Battle</string>
     <string name="rematch_battle">Rematch</string>
     <string name="period_daily">Daily</string>
@@ -54,8 +55,8 @@
     <string name="error_message">Error fetching quote. Please try again.</string>
     <string name="quote_error_chuck">Chuck Norris quotes are unavailable right now.</string>
     <string name="quote_error_cat">Cat facts are unavailable right now.</string>
-    <string name="quote_error_dog">Dog facts are unavailable right now.</string>
-    <string name="quote_error_battle">The quote battle could not load right now.</string>
+    <string name="quote_error_dog">Sorry, the dog facts are chasing their tail right now. Please try again.</string>
+    <string name="quote_error_battle">Sorry, the battle arena tripped over a sleepy fact provider. Please try again.</string>
     <string name="retry">Retry</string>
     <string name="refresh_fact">Refresh</string>
     <string name="next_matchup">Next matchup</string>

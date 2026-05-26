@@ -10,7 +10,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.gson.gson
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -124,12 +126,81 @@ class ApiServiceTest {
     }
 
     @Test
-    fun getRandomDogFact_throwsWhenApiFails() {
+    fun getRandomDogFact_fallsBackToKinduffWhenDogApiFails() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val service = ApiService(
+            testClient(
+                statusForUrl = { requestUrl ->
+                    requestedUrls += requestUrl
+                    when (requestUrl) {
+                        "https://dogapi.dog/api/v2/facts?limit=1" -> HttpStatusCode.ServiceUnavailable
+                        "https://dog-api.kinduff.com/api/facts" -> HttpStatusCode.OK
+                        else -> HttpStatusCode.NotFound
+                    }
+                },
+                bodyForUrl = { requestUrl ->
+                    when (requestUrl) {
+                        "https://dog-api.kinduff.com/api/facts" ->
+                            """{"facts":["Dogs can smell snacks through weak excuses."],"success":true}"""
+                        else -> "{}"
+                    }
+                }
+            )
+        )
+
+        val fact = service.getRandomDogFact()
+
+        assertEquals("Dogs can smell snacks through weak excuses.", fact)
+        assertEquals(
+            listOf(
+                "https://dogapi.dog/api/v2/facts?limit=1",
+                "https://dog-api.kinduff.com/api/facts"
+            ),
+            requestedUrls
+        )
+    }
+
+    @Test
+    fun getRandomDogFact_fallsBackWhenPrimaryTimesOut() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val service = ApiService(
+            client = testClient(
+                statusForUrl = { HttpStatusCode.OK },
+                bodyForUrl = { requestUrl ->
+                    requestedUrls += requestUrl
+                    when (requestUrl) {
+                        "https://dogapi.dog/api/v2/facts?limit=1" ->
+                            withTimeout(1) {
+                                delay(50)
+                                "This response should time out."
+                            }
+                        "https://dog-api.kinduff.com/api/facts" ->
+                            """{"facts":["Fallback dogs arrived before the spinner got comfy."],"success":true}"""
+                        else -> "{}"
+                    }
+                }
+            )
+        )
+
+        val fact = service.getRandomDogFact()
+
+        assertEquals("Fallback dogs arrived before the spinner got comfy.", fact)
+        assertEquals(
+            listOf(
+                "https://dogapi.dog/api/v2/facts?limit=1",
+                "https://dog-api.kinduff.com/api/facts"
+            ),
+            requestedUrls
+        )
+    }
+
+    @Test
+    fun getRandomDogFact_usesEmergencyFactWhenRemoteProvidersFail() = runBlocking {
         val service = ApiService(testClient(status = HttpStatusCode.InternalServerError))
 
-        assertThrows(FactServiceException::class.java) {
-            runBlocking { service.getRandomDogFact() }
-        }
+        val fact = service.getRandomDogFact()
+
+        assertEquals("Dogs have a sense of smell far stronger than humans.", fact)
     }
 
     @Test
@@ -152,12 +223,23 @@ class ApiServiceTest {
         status: HttpStatusCode = HttpStatusCode.OK,
         bodyForUrl: (String) -> String
     ): HttpClient {
+        return testClient(
+            statusForUrl = { status },
+            bodyForUrl = bodyForUrl
+        )
+    }
+
+    private fun testClient(
+        statusForUrl: (String) -> HttpStatusCode,
+        bodyForUrl: suspend (String) -> String
+    ): HttpClient {
         return HttpClient(MockEngine) {
             engine {
                 addHandler { request ->
+                    val requestUrl = request.url.toString()
                     respond(
-                        content = bodyForUrl(request.url.toString()),
-                        status = status,
+                        content = bodyForUrl(requestUrl),
+                        status = statusForUrl(requestUrl),
                         headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     )
                 }
