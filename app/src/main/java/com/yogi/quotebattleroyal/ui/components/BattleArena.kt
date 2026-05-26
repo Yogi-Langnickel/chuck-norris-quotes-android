@@ -490,30 +490,6 @@ private fun BattleContenderCard(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInput(canSelect, isSettling, contender.quote.id) {
-                    if (!canSelect || isSettling) return@pointerInput
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            val threshold = size.width * 0.22f
-                            if (kotlin.math.abs(dragOffset) >= threshold) {
-                                val direction = if (dragOffset >= 0f) 1f else -1f
-                                onSwipedAway(direction)
-                            } else {
-                                settleDragOffset()
-                            }
-                        },
-                        onDragCancel = {
-                            settleDragOffset()
-                        },
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            dragOffset = (dragOffset + dragAmount).coerceIn(
-                                minimumValue = -size.width * 0.62f,
-                                maximumValue = size.width * 0.62f
-                            )
-                        }
-                    )
-                }
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -537,10 +513,34 @@ private fun BattleContenderCard(
                 modifier = Modifier.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pointerInput(canSelect, isSettling, contender.quote.id) {
+                            if (!canSelect || isSettling) return@pointerInput
+                            detectHorizontalDragGestures(
+                                onDragEnd = {
+                                    val threshold = size.width * 0.22f
+                                    if (kotlin.math.abs(dragOffset) >= threshold) {
+                                        val direction = if (dragOffset >= 0f) 1f else -1f
+                                        onSwipedAway(direction)
+                                    } else {
+                                        settleDragOffset()
+                                    }
+                                },
+                                onDragCancel = {
+                                    settleDragOffset()
+                                },
+                                onHorizontalDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragOffset = (dragOffset + dragAmount).coerceIn(
+                                        minimumValue = -size.width * 0.62f,
+                                        maximumValue = size.width * 0.62f
+                                    )
+                                }
+                            )
+                        },
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -572,13 +572,13 @@ private fun BattleContenderCard(
                             )
                         }
                     }
-                }
 
-                Text(
-                    text = contender.quote.value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                    Text(
+                        text = contender.quote.value,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 Button(
                     onClick = onSelected,
                     enabled = canSelect,
