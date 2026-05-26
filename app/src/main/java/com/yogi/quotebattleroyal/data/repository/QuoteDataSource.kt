@@ -9,6 +9,7 @@ interface QuoteDataSource {
     suspend fun getRandomQuote(): Quote
     suspend fun getRandomCatFact(): Quote
     suspend fun getRandomDogFact(): Quote
+    suspend fun getRandomYogiQuote(): Quote
     suspend fun getBattleRound(): BattleRound
     suspend fun getBattleChallenger(excludedSources: Set<FactSource>): BattleContender
 }

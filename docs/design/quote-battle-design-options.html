@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quote Battle Design Options</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111314;
+      --panel: #1b1f22;
+      --panel-strong: #242a2e;
+      --line: #333b40;
+      --text: #f2f4f3;
+      --muted: #a9b2ad;
+      --chuck: #ffb84d;
+      --cat: #7bdff2;
+      --dog: #b7f66d;
+      --yogi: #d7a6ff;
+      --win: #8ff0b0;
+      --danger: #ff7b7b;
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(143, 240, 176, .10), transparent 32rem),
+        linear-gradient(180deg, #151819 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      line-height: 1.1;
+      font-weight: 760;
+    }
+
+    h2 {
+      margin-top: 34px;
+      font-size: 18px;
+      font-weight: 720;
+      color: #f8faf7;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 720;
+      color: #ffffff;
+    }
+
+    .intro {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 22px;
+    }
+
+    .intro p {
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .option {
+      min-height: 248px;
+      background: rgba(27, 31, 34, .92);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 16px 42px rgba(0, 0, 0, .24);
+    }
+
+    .option small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .phone {
+      width: 100%;
+      max-width: 320px;
+      min-height: 168px;
+      margin: 0 auto;
+      border: 1px solid #3b4449;
+      border-radius: 22px;
+      padding: 14px;
+      background: #111516;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+
+    .screen-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .pill {
+      border-radius: 999px;
+      background: #263035;
+      padding: 4px 8px;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ticker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid #384247;
+      border-radius: 8px;
+      background: #1c2225;
+    }
+
+    .ticker span {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 0;
+      color: #dce4e0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .ticker .leader {
+      color: #101513;
+      background: var(--win);
+      border-radius: 6px;
+      padding: 2px 6px;
+    }
+
+    .podium-leader {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(215, 166, 255, .22), rgba(143, 240, 176, .12));
+      border: 1px solid rgba(215, 166, 255, .55);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #2b3338;
+      border: 1px solid #465158;
+      font-weight: 800;
+    }
+
+    .podium-leader strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .podium-leader em {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-style: normal;
+    }
+
+    .podium-score {
+      font-size: 28px;
+      font-weight: 820;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .mini-grid span {
+      border-radius: 8px;
+      background: #20272b;
+      border: 1px solid #354047;
+      padding: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .mini-grid b {
+      display: block;
+      color: var(--text);
+      font-size: 15px;
+      margin-top: 4px;
+    }
+
+    .bars {
+      display: grid;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #384247;
+      background: #1c2225;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 48px 1fr 28px;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .track {
+      height: 10px;
+      border-radius: 999px;
+      background: #30383d;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .arena {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .quote-card {
+      min-height: 98px;
+      border-radius: 8px;
+      border: 1px solid #3a444b;
+      background: #20262a;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quote-card strong {
+      font-size: 13px;
+    }
+
+    .quote-card p {
+      margin-top: 8px;
+      color: #c9d2ce;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .score-pop .winner {
+      border-color: var(--win);
+      box-shadow: 0 0 0 3px rgba(143, 240, 176, .10);
+      transform: scale(1.025);
+    }
+
+    .plus-one {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      color: #101513;
+      background: var(--win);
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .stamp .winner::after {
+      content: "WINNER";
+      position: absolute;
+      inset: 38px auto auto 50%;
+      width: 94px;
+      transform: translateX(-50%) rotate(-9deg);
+      border: 2px solid var(--win);
+      color: var(--win);
+      border-radius: 6px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      padding: 4px 0;
+      background: rgba(17, 21, 19, .72);
+    }
+
+    .stamp .loser {
+      opacity: .48;
+      transform: translateX(8px);
+    }
+
+    .spotlight {
+      position: relative;
+    }
+
+    .spotlight .winner {
+      border-color: var(--yogi);
+      box-shadow: 0 0 0 999px rgba(0, 0, 0, .18), 0 0 38px rgba(215, 166, 255, .34);
+      transform: translateY(-5px);
+      z-index: 1;
+    }
+
+    .spotlight .loser {
+      filter: grayscale(.45);
+      opacity: .44;
+    }
+
+    .buttons {
+      display: grid;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .button-demo {
+      display: grid;
+      gap: 8px;
+    }
+
+    button {
+      width: 85%;
+      justify-self: center;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      background: #354149;
+      color: var(--text);
+      font-weight: 760;
+      font-size: 14px;
+    }
+
+    .button-demo:nth-child(1) button {
+      background: #46515a;
+    }
+
+    .button-demo:nth-child(2) button {
+      color: #111513;
+      background: var(--win);
+    }
+
+    .button-demo:nth-child(3) button {
+      background: #3e2f4c;
+      border: 1px solid rgba(215, 166, 255, .58);
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .intro {
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="intro">
+      <div>
+        <h1>Quote Battle visual options</h1>
+        <p>Dark-mode mockups for scoreboard direction, winner feedback, and vote button copy.</p>
+      </div>
+      <span class="pill">Decision board</span>
+    </section>
+
+    <h2>Scoreboard</h2>
+    <section class="grid">
+      <article class="option">
+        <h3>1. Compact Sports Ticker</h3>
+        <div class="phone">
+          <div class="screen-title"><span>Battle score</span><span>3-win run</span></div>
+          <div class="ticker">
+            <span><b>Chuck</b><b>14</b></span>
+            <span><b>Cat</b><b>5</b></span>
+            <span class="leader"><b>Yogi</b><b>15</b></span>
+            <span><b>Dog</b><b>12</b></span>
+          </div>
+        </div>
+        <small>Smallest footprint. Best when the battle cards should stay visually dominant.</small>
+      </article>
+
+      <article class="option">
+        <h3>2. Champion Podium</h3>
+        <div class="phone">
+          <div class="screen-title"><span>Current leader</span><span>Daily standings</span></div>
+          <div class="podium-leader">
+            <div class="avatar">YG</div>
+            <div><strong>Yogi leads</strong><em>ahead by 1 win</em></div>
+            <div class="podium-score">15</div>
+          </div>
+          <div class="mini-grid">
+            <span>Chuck<b>14</b></span>
+            <span>Dog<b>12</b></span>
+            <span>Cat<b>5</b></span>
+          </div>
+        </div>
+        <small>Most expressive. Turns the scoreboard into a clear competition status panel.</small>
+      </article>
+
+      <article class="option">
+        <h3>3. Power Bars Dashboard</h3>
+        <div class="phone">
+          <div class="screen-title"><span>Weekly totals</span><span>46 battles</span></div>
+          <div class="bars">
+            <div class="bar"><b>Yogi</b><div class="track"><div class="fill" style="width: 100%; background: var(--yogi);"></div></div><b>15</b></div>
+            <div class="bar"><b>Chuck</b><div class="track"><div class="fill" style="width: 93%; background: var(--chuck);"></div></div><b>14</b></div>
+            <div class="bar"><b>Dog</b><div class="track"><div class="fill" style="width: 80%; background: var(--dog);"></div></div><b>12</b></div>
+            <div class="bar"><b>Cat</b><div class="track"><div class="fill" style="width: 33%; background: var(--cat);"></div></div><b>5</b></div>
+          </div>
+        </div>
+        <small>Best for comparison. More analytical and game-dashboard oriented.</small>
+      </article>
+    </section>
+
+    <h2>Winning feedback</h2>
+    <section class="grid">
+      <article class="option">
+        <h3>1. Fast Score Pop</h3>
+        <div class="phone score-pop">
+          <div class="screen-title"><span>Frame after tap</span><span>~450ms</span></div>
+          <div class="arena">
+            <div class="quote-card winner">
+              <strong>Yogi</strong>
+              <span class="plus-one">+1</span>
+              <p>Sometimes the best advice is a terrible joke.</p>
+            </div>
+            <div class="quote-card loser">
+              <strong>Chuck</strong>
+              <p>The losing quote exits quickly.</p>
+            </div>
+          </div>
+        </div>
+        <small>Cleanest and fastest. The score change is immediately obvious without delaying the next round.</small>
+      </article>
+
+      <article class="option">
+        <h3>2. Victory Stamp</h3>
+        <div class="phone stamp">
+          <div class="screen-title"><span>Frame after tap</span><span>~650ms</span></div>
+          <div class="arena">
+            <div class="quote-card winner">
+              <strong>Dog</strong>
+              <p>A little dramatic, still readable.</p>
+            </div>
+            <div class="quote-card loser">
+              <strong>Cat</strong>
+              <p>Loser card fades and slides away.</p>
+            </div>
+          </div>
+        </div>
+        <small>Most explicit. It feels playful while staying compact enough for mobile.</small>
+      </article>
+
+      <article class="option">
+        <h3>3. Arena Spotlight</h3>
+        <div class="phone spotlight">
+          <div class="screen-title"><span>Frame after tap</span><span>~750ms</span></div>
+          <div class="arena">
+            <div class="quote-card loser">
+              <strong>Cat</strong>
+              <p>The non-winner dims into the background.</p>
+            </div>
+            <div class="quote-card winner">
+              <strong>Yogi</strong>
+              <p>The winner gets a short spotlight moment.</p>
+            </div>
+          </div>
+        </div>
+        <small>Most cinematic. Higher risk of feeling slow if not tuned carefully.</small>
+      </article>
+    </section>
+
+    <h2>Choose button copy</h2>
+    <section class="grid">
+      <article class="option">
+        <h3>1. Direct</h3>
+        <div class="phone buttons">
+          <div class="button-demo">
+            <button>Choose Yogi</button>
+            <p class="caption">Clear, neutral, lowest ambiguity.</p>
+          </div>
+          <div class="button-demo">
+            <button>Choose Chuck</button>
+          </div>
+        </div>
+        <small>Best for clarity and accessibility.</small>
+      </article>
+
+      <article class="option">
+        <h3>2. Battle Style</h3>
+        <div class="phone buttons">
+          <div class="button-demo">
+            <button>Yogi wins</button>
+            <p class="caption">Clear action with more game energy.</p>
+          </div>
+          <div class="button-demo">
+            <button>Chuck wins</button>
+          </div>
+        </div>
+        <small>Best match for the current battle mechanic.</small>
+      </article>
+
+      <article class="option">
+        <h3>3. Playful</h3>
+        <div class="phone buttons">
+          <div class="button-demo">
+            <button>Back Yogi</button>
+            <p class="caption">More personality, slightly less literal.</p>
+          </div>
+          <div class="button-demo">
+            <button>Back Dog</button>
+          </div>
+        </div>
+        <small>Best if the app voice should feel more casual.</small>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

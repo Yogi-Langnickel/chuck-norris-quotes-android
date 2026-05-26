@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.yogi.quotebattleroyal.data.local.BattleScoreStore
 import com.yogi.quotebattleroyal.data.model.Quote
 import com.yogi.quotebattleroyal.data.repository.QuoteDataSource
-import com.yogi.quotebattleroyal.data.repository.QuoteRepository
 import com.yogi.quotebattleroyal.domain.BattlePeriod
 import com.yogi.quotebattleroyal.domain.BattleRound
 import com.yogi.quotebattleroyal.domain.BattleScore
@@ -28,6 +27,7 @@ enum class QuoteRequest {
     CHUCK_QUOTE,
     CAT_FACT,
     DOG_FACT,
+    YOGI_QUOTE,
     BATTLE_ROUND
 }
 
@@ -83,6 +83,14 @@ class QuoteViewModel(
 
     fun showOrFetchRandomDogFact() {
         showCachedStandaloneQuote(QuoteRequest.DOG_FACT, ::fetchRandomDogFact)
+    }
+
+    fun fetchRandomYogiQuote() {
+        fetchStandaloneQuote(QuoteRequest.YOGI_QUOTE) { quoteRepository.getRandomYogiQuote() }
+    }
+
+    fun showOrFetchRandomYogiQuote() {
+        showCachedStandaloneQuote(QuoteRequest.YOGI_QUOTE, ::fetchRandomYogiQuote)
     }
 
     private fun showCachedStandaloneQuote(
@@ -189,6 +197,7 @@ class QuoteViewModel(
             QuoteRequest.CHUCK_QUOTE -> fetchRandomQuote()
             QuoteRequest.CAT_FACT -> fetchRandomCatFact()
             QuoteRequest.DOG_FACT -> fetchRandomDogFact()
+            QuoteRequest.YOGI_QUOTE -> fetchRandomYogiQuote()
             QuoteRequest.BATTLE_ROUND -> fetchBattleRound()
         }
     }
@@ -197,10 +206,14 @@ class QuoteViewModel(
         _selectedPeriod.value = period
     }
 
-    // Add this Factory block
+    override fun onCleared() {
+        (quoteRepository as? AutoCloseable)?.close()
+        super.onCleared()
+    }
+
     companion object {
         fun provideFactory(
-            repository: QuoteRepository,
+            repository: QuoteDataSource,
             battleScoreStore: BattleScoreStore
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

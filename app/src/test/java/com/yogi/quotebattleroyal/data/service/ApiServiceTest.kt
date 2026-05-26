@@ -212,6 +212,147 @@ class ApiServiceTest {
         }
     }
 
+    @Test
+    fun getRandomYogiQuote_rotatesAcrossActiveProviders() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val acceptHeaders = mutableListOf<String?>()
+        val service = ApiService(
+            testClient(
+                statusForUrl = { HttpStatusCode.OK },
+                bodyForUrl = { requestUrl, acceptHeader ->
+                    requestedUrls += requestUrl
+                    acceptHeaders += acceptHeader
+                    when (requestUrl) {
+                        "https://api.adviceslip.com/advice" ->
+                            """{"slip":{"id":1,"advice":"Build the thing before arguing about it."}}"""
+                        "https://icanhazdadjoke.com/" ->
+                            """{"id":"R7UvXnsearch","joke":"What do you call a fake noodle? An impasta.","status":200}"""
+                        else -> "{}"
+                    }
+                }
+            )
+        )
+
+        assertEquals("Build the thing before arguing about it.", service.getRandomYogiQuote())
+        assertEquals("What do you call a fake noodle? An impasta.", service.getRandomYogiQuote())
+        assertEquals(
+            listOf(
+                "https://api.adviceslip.com/advice",
+                "https://icanhazdadjoke.com/"
+            ),
+            requestedUrls
+        )
+        assertEquals("application/json", acceptHeaders.last())
+    }
+
+    @Test
+    fun getRandomYogiQuote_fallsBackToNextProviderWhenProviderFails() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val service = ApiService(
+            testClient(
+                statusForUrl = { requestUrl ->
+                    requestedUrls += requestUrl
+                    when (requestUrl) {
+                        "https://api.adviceslip.com/advice" -> HttpStatusCode.ServiceUnavailable
+                        "https://icanhazdadjoke.com/" -> HttpStatusCode.OK
+                        else -> HttpStatusCode.NotFound
+                    }
+                },
+                bodyForUrl = { requestUrl ->
+                    when (requestUrl) {
+                        "https://icanhazdadjoke.com/" ->
+                            """{"id":"dad-1","joke":"Keep moving forward, but maybe stretch first.","status":200}"""
+                        else -> "{}"
+                    }
+                }
+            )
+        )
+
+        val quote = service.getRandomYogiQuote()
+
+        assertEquals("Keep moving forward, but maybe stretch first.", quote)
+        assertEquals(
+            listOf("https://api.adviceslip.com/advice", "https://icanhazdadjoke.com/"),
+            requestedUrls
+        )
+    }
+
+    @Test
+    fun getRandomYogiQuote_fallsBackOnEmptyProviderResponse() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val service = ApiService(
+            testClient(
+                statusForUrl = { HttpStatusCode.OK },
+                bodyForUrl = { requestUrl ->
+                    requestedUrls += requestUrl
+                    when (requestUrl) {
+                        "https://api.adviceslip.com/advice" -> """{"slip":{"id":1,"advice":""}}"""
+                        "https://icanhazdadjoke.com/" ->
+                            """{"id":"dad-2","joke":"Fallback joke arrived.","status":200}"""
+                        else -> "{}"
+                    }
+                }
+            )
+        )
+
+        val quote = service.getRandomYogiQuote()
+
+        assertEquals("Fallback joke arrived.", quote)
+        assertEquals(
+            listOf("https://api.adviceslip.com/advice", "https://icanhazdadjoke.com/"),
+            requestedUrls
+        )
+    }
+
+    @Test
+    fun getRandomYogiQuote_fallsBackWhenProviderTimesOut() = runBlocking {
+        val requestedUrls = mutableListOf<String>()
+        val service = ApiService(
+            client = testClient(
+                statusForUrl = { HttpStatusCode.OK },
+                bodyForUrl = { requestUrl ->
+                    requestedUrls += requestUrl
+                    when (requestUrl) {
+                        "https://api.adviceslip.com/advice" -> {
+                            delay(100)
+                            """{"slip":{"id":1,"advice":"Late advice."}}"""
+                        }
+                        "https://icanhazdadjoke.com/" ->
+                            """{"id":"dad-3","joke":"Yogi did not wait for the slow one.","status":200}"""
+                        else -> "{}"
+                    }
+                }
+            ),
+            yogiProviderTimeoutMs = 25
+        )
+
+        val quote = service.getRandomYogiQuote()
+
+        assertEquals("Yogi did not wait for the slow one.", quote)
+        assertEquals(
+            listOf("https://api.adviceslip.com/advice", "https://icanhazdadjoke.com/"),
+            requestedUrls
+        )
+    }
+
+    @Test
+    fun getRandomYogiQuote_usesLocalFallbackWhenAllRemoteProvidersFail() = runBlocking {
+        val service = ApiService(testClient(status = HttpStatusCode.InternalServerError))
+
+        val quote = service.getRandomYogiQuote()
+
+        assertEquals("Even monkeys need a break sometimes. (API Error)", quote)
+    }
+
+    @Test
+    fun getRandomYogiQuote_rethrowsCancellation() {
+        val service = ApiService(cancelledClient())
+
+        assertThrows(CancellationException::class.java) {
+            runBlocking { service.getRandomYogiQuote() }
+        }
+    }
+
     private fun testClient(
         body: String = "{}",
         status: HttpStatusCode = HttpStatusCode.OK
@@ -233,12 +374,22 @@ class ApiServiceTest {
         statusForUrl: (String) -> HttpStatusCode,
         bodyForUrl: suspend (String) -> String
     ): HttpClient {
+        return testClient(
+            statusForUrl = statusForUrl,
+            bodyForUrl = { requestUrl, _ -> bodyForUrl(requestUrl) }
+        )
+    }
+
+    private fun testClient(
+        statusForUrl: (String) -> HttpStatusCode,
+        bodyForUrl: suspend (String, String?) -> String
+    ): HttpClient {
         return HttpClient(MockEngine) {
             engine {
                 addHandler { request ->
                     val requestUrl = request.url.toString()
                     respond(
-                        content = bodyForUrl(requestUrl),
+                        content = bodyForUrl(requestUrl, request.headers[HttpHeaders.Accept]),
                         status = statusForUrl(requestUrl),
                         headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     )

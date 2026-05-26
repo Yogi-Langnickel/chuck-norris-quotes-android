@@ -22,7 +22,9 @@
     <string name="tab_chuck_facts">Chuck</string>
     <string name="tab_cat_facts">Cat</string>
     <string name="tab_dog_facts">Dog</string>
+    <string name="tab_ask_yogi">Ask Yogi</string>
     <string name="dog_api_attribution">Powered by Stratonauts Dog API</string>
+    <string name="yogi_api_attribution">Yogi rotates third-party advice and joke APIs.</string>
     <string name="start_battle">Battle</string>
     <string name="rematch_battle">Rematch</string>
     <string name="period_daily">Daily</string>
@@ -31,9 +33,17 @@
     <string name="chuck_score">Chuck</string>
     <string name="cat_score">Cat</string>
     <string name="dog_score">Dog</string>
+    <string name="yogi_score">Yogi</string>
     <string name="draw_score">Draws</string>
-    <string name="personal_score_heading">Your %1$s picks</string>
+    <string name="personal_score_heading">%1$s standings</string>
     <string name="champion_streak_inline">Current champion: %1$s (%2$d)</string>
+    <string name="scoreboard_current_leader">Current leader</string>
+    <string name="scoreboard_daily_standings">%1$s standings</string>
+    <string name="scoreboard_no_leader">No leader yet</string>
+    <string name="scoreboard_tied_leader">Tied at the top</string>
+    <string name="scoreboard_leads">leads</string>
+    <string name="scoreboard_ahead_by">ahead by %1$d</string>
+    <string name="scoreboard_no_margin">waiting for a breakaway</string>
     <string name="battle_leader_empty">No winner for this period yet.</string>
     <string name="battle_leader_chuck">Chuck leads this period by %1$d.</string>
     <string name="battle_leader_cat">Cat leads this period by %1$d.</string>
@@ -41,8 +51,9 @@
     <string name="battle_empty">Start a round to compare two facts.</string>
     <string name="chuck_contender">Chuck</string>
     <string name="cat_contender">Cat</string>
-    <string name="choose_contender_winner">Choose %1$s</string>
+    <string name="choose_contender_winner">%1$s has spoken</string>
     <string name="winner_selected">Winner selected</string>
+    <string name="victory_stamp_label">WINNER</string>
     <string name="victory_message">%1$s wins!</string>
     <string name="battle_power_value">%1$d</string>
     <string name="battle_result_chuck">Power stat: Chuck edges Cat by %1$d.</string>
@@ -52,13 +63,15 @@
     <string name="loading_chuck">Loading Chuck fact...</string>
     <string name="loading_cat">Loading cat fact...</string>
     <string name="loading_dog">Loading dog fact...</string>
+    <string name="loading_yogi">Asking Yogi...</string>
     <string name="error_message">Error fetching quote. Please try again.</string>
     <string name="quote_error_chuck">Chuck Norris quotes are unavailable right now.</string>
     <string name="quote_error_cat">Cat facts are unavailable right now.</string>
     <string name="quote_error_dog">Sorry, the dog facts are chasing their tail right now. Please try again.</string>
+    <string name="quote_error_yogi">Even monkeys need a break sometimes. Please try again.</string>
     <string name="quote_error_battle">Sorry, the battle arena tripped over a sleepy fact provider. Please try again.</string>
     <string name="retry">Retry</string>
-    <string name="refresh_fact">Refresh</string>
+    <string name="refresh_fact">Tell me more</string>
     <string name="next_matchup">Next matchup</string>
     <string name="tie_break_refresh_both">Tie break</string>
 </resources>

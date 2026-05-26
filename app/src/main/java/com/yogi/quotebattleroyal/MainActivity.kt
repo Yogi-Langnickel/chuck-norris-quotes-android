@@ -5,7 +5,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +42,10 @@ class MainActivity : ComponentActivity() {
 
         // 2. Inject the client into the service, then into the repository
         val apiService = ApiService(client = ktorClient)
-        val repository = QuoteRepository(apiService)
+        val repository = QuoteRepository(
+            factService = apiService,
+            prefetchEnabled = true
+        )
         val battleScoreStore = AndroidBattleScoreStore(
             getSharedPreferences("quote_battle_scores", MODE_PRIVATE)
         )
@@ -52,11 +54,10 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            val systemDarkTheme = isSystemInDarkTheme()
             var darkThemeOverride by remember {
                 mutableStateOf(themePreferenceStore.darkThemeOverride)
             }
-            val isDarkTheme = darkThemeOverride ?: systemDarkTheme
+            val isDarkTheme = darkThemeOverride ?: true
 
             SideEffect {
                 val systemBarStyle = if (isDarkTheme) {
