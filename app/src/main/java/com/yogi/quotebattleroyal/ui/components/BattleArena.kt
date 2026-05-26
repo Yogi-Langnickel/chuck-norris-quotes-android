@@ -89,7 +89,7 @@ fun BattleArena(
 
     LaunchedEffect(battleRound?.first?.quote?.id, battleRound?.second?.quote?.id, selectedWinner) {
         if (selectedWinner != null && selectedWinner != BattleWinner.DRAW) {
-            delay(1_100)
+            delay(550)
             onLoserSwipedAway()
         }
     }

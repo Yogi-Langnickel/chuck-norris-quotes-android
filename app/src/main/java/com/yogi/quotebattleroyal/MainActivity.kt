@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yogi.quotebattleroyal.data.local.AndroidBattleScoreStore
 import com.yogi.quotebattleroyal.data.local.AndroidThemePreferenceStore
@@ -43,7 +44,10 @@ class MainActivity : ComponentActivity() {
 
         // 2. Inject the client into the service, then into the repository
         val apiService = ApiService(client = ktorClient)
-        val repository = QuoteRepository(apiService)
+        val repository = QuoteRepository(
+            factService = apiService,
+            prefetchScope = lifecycleScope
+        )
         val battleScoreStore = AndroidBattleScoreStore(
             getSharedPreferences("quote_battle_scores", MODE_PRIVATE)
         )

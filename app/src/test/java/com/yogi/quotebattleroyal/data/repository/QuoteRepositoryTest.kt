@@ -2,12 +2,17 @@ package com.yogi.quotebattleroyal.data.repository
 
 import com.yogi.quotebattleroyal.data.service.FactService
 import com.yogi.quotebattleroyal.domain.FactSource
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class QuoteRepositoryTest {
 
     @Test
@@ -93,6 +98,34 @@ class QuoteRepositoryTest {
     }
 
     @Test
+    fun getRandomQuote_usesOneSlotPrefetchAndRefillsAfterConsumption() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val factService = QueuedFactService(
+            jokes = mutableListOf(
+                "Buffered Chuck quote.",
+                "Replacement Chuck quote.",
+                "Next buffered Chuck quote."
+            )
+        )
+        val repository = QuoteRepository(
+            factService = factService,
+            prefetchScope = backgroundScope,
+            dispatcher = dispatcher
+        )
+        advanceUntilIdle()
+
+        val firstQuote = repository.getRandomQuote()
+        advanceUntilIdle()
+
+        assertEquals("Buffered Chuck quote.", firstQuote.value)
+        assertEquals(2, factService.jokeRequestCount)
+
+        val secondQuote = repository.getRandomQuote()
+
+        assertEquals("Replacement Chuck quote.", secondQuote.value)
+    }
+
+    @Test
     fun getRandomQuote_propagatesApiFailures() {
         val repository = QuoteRepository(
             fakeFactService(
@@ -154,6 +187,28 @@ class QuoteRepositoryTest {
         override suspend fun getRandomDogFact(): String {
             dogFactError?.let { throw it }
             return dogFact
+        }
+    }
+
+    private class QueuedFactService(
+        private val jokes: MutableList<String> = mutableListOf("Chuck Norris can divide by zero."),
+        private val catFacts: MutableList<String> = mutableListOf("Cats have excellent night vision."),
+        private val dogFacts: MutableList<String> = mutableListOf("Dogs have a strong sense of smell.")
+    ) : FactService {
+        var jokeRequestCount = 0
+            private set
+
+        override suspend fun getRandomJoke(): String {
+            jokeRequestCount++
+            return jokes.removeFirst()
+        }
+
+        override suspend fun getRandomCatFact(): String {
+            return catFacts.removeFirst()
+        }
+
+        override suspend fun getRandomDogFact(): String {
+            return dogFacts.removeFirst()
         }
     }
 }

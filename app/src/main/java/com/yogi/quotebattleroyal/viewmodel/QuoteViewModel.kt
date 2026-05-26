@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.yogi.quotebattleroyal.data.local.BattleScoreStore
 import com.yogi.quotebattleroyal.data.model.Quote
 import com.yogi.quotebattleroyal.data.repository.QuoteDataSource
-import com.yogi.quotebattleroyal.data.repository.QuoteRepository
 import com.yogi.quotebattleroyal.domain.BattlePeriod
 import com.yogi.quotebattleroyal.domain.BattleRound
 import com.yogi.quotebattleroyal.domain.BattleScore
@@ -200,7 +199,7 @@ class QuoteViewModel(
     // Add this Factory block
     companion object {
         fun provideFactory(
-            repository: QuoteRepository,
+            repository: QuoteDataSource,
             battleScoreStore: BattleScoreStore
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
