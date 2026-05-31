@@ -1,7 +1,7 @@
 # itch.io Publishing Workflow
 
 Status: active draft
-Last updated: 2026-05-23
+Last updated: 2026-05-31
 
 Use this workflow for the no-cost itch.io distribution path for Quote Battle
 Royal. Keep credentials, session cookies, signing keys, screenshots from private
@@ -49,12 +49,25 @@ casual, funny, no-ai
 ## Manual Browser Setup
 
 Use the Playwright-controlled browser when the user wants the assistant to edit
-the itch.io page directly.
+the itch.io page directly. Keep user interaction to the minimum needed: the
+assistant handles routine navigation, field checks, approved non-sensitive
+metadata edits, draft saves, and review screenshots; the user handles login,
+2FA/captcha, missing private information, and explicit approval gates.
+
+Do not bypass login, MFA, captcha, bot detection, access controls, or itch.io
+security checks. Do not store, print, commit, or extract passwords, tokens,
+session cookies, private dashboard screenshots, or release-signing material.
+
+Before asking the user to act, batch the smallest clear set of required actions
+or questions. Do not ask the user to click through routine non-sensitive UI when
+Playwright can do it safely.
 
 1. Open `https://itch.io/login` in the Playwright browser.
 1. The user logs in manually and completes any 2FA/captcha.
 1. Verify with a snapshot from `https://itch.io/dashboard`.
 1. Open the Quote Battle edit page.
+1. Ask for explicit user approval before upload-sensitive actions, final publish
+   actions, or any visibility change to `Public`.
 1. Do not publish or switch visibility to public without explicit user approval.
 
 ## Release Artifact Checklist
