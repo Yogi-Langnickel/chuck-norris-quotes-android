@@ -37,4 +37,10 @@ captures/
 
 # Local agent memory
 docs/agent-memory.md
-docs/memory/
+docs/memory/*
+!docs/memory/
+!docs/memory/README.md
+!docs/memory/architecture.md
+!docs/memory/dev-workflow.md
+!docs/memory/security.md
+!docs/memory/testing.md

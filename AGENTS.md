@@ -7,7 +7,10 @@ Canonical memory and durable docs now live in the central workspace memory repo:
 - Workspace memory: `/Users/yogi/Coding/docs/workspace/agent-memory.md`
 - Chuck Norris memory: `/Users/yogi/Coding/docs/projects/chuck-norris/agent-memory.md`
 
-Repo-local `docs/` files are compatibility copies for existing scripts and historical links. Prefer the central docs above for new durable memory; update repo-local copies only when a repo script, CI check, or in-repo reference still requires it.
+Repo-local `docs/` files are compatibility references for existing scripts and
+historical links. Prefer the central docs above for new durable memory; update
+repo-local content only when a repo script, CI check, or in-repo reference still
+requires a local file.
 
 Do not rely on generated context snapshot files for this repo. Agents have direct repository access and should inspect source files with `rg`, `rg --files`, and focused reads.
 
@@ -51,7 +54,7 @@ Never invent secrets, credentials, signing keys, API keys, Play Store credential
 
 ## Pre-Develop Review Gate
 
-- Before asking for, approving, or performing substantial or high-risk merges into `develop`, request a manual pre-merge persona review from the workspace master assistant.
+- Before asking for, approving, or performing substantial or high-risk merges into `develop`, request two manual pre-merge persona review iterations from the workspace master assistant.
 - Use the workspace prompt at `/Users/yogi/Coding/Subagent-Prompts/personas/pre-merge-review-gate.md` when available.
 - Select personas by risk area. For this Android app, common personas are Senior UX/UI Designer, QA And Test Architect, Security And Privacy Engineer, Product And Operations Reviewer, and Senior Solution Architect for architecture changes.
 - Do not merge to `master` unless the user explicitly asks for a release/promotion flow.
