@@ -55,7 +55,7 @@ Never invent secrets, credentials, signing keys, API keys, Play Store credential
 ## Pre-Develop Review Gate
 
 - Before asking for, approving, or performing substantial or high-risk merges into `develop`, request two manual pre-merge persona review iterations from the workspace master assistant.
-- Use the workspace prompt at `/Users/yogi/Coding/Subagent-Prompts/personas/pre-merge-review-gate.md` when available.
+- Use the workspace prompt at `/Users/yogi/Coding/Subagent-Prompts/reusable/pre-merge-review-gate.md` when available.
 - Select personas by risk area. For this Android app, common personas are Senior UX/UI Designer, QA And Test Architect, Security And Privacy Engineer, Product And Operations Reviewer, and Senior Solution Architect for architecture changes.
 - Do not merge to `master` unless the user explicitly asks for a release/promotion flow.
 
