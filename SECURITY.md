@@ -14,8 +14,9 @@ Do not file public issues with signing keys, Play Store credentials, private rel
 - Keep networking simple and HTTPS-only.
 - Validate release workflow changes with the relevant Gradle command before shipping.
 
-## Before Release Or Merge To `main`
+## Before Release Or High-Risk Merge To `develop`
 
 - Run focused tests and a debug or release build as appropriate.
 - Review `git diff` for signing material, local machine paths, generated artifacts, and private release config.
-- Request the workspace manual pre-merge persona review gate for `main`.
+- Request the workspace manual pre-merge persona review gate before substantial
+  or high-risk merges to `develop`.

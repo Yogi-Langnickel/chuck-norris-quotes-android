@@ -13,6 +13,7 @@ local.properties
 .DS_Store
 
 # Outputs
+/release/
 *.apk
 *.aab
 *.apks

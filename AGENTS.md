@@ -40,7 +40,7 @@ Never invent secrets, credentials, signing keys, API keys, Play Store credential
 - Use `rg` and `rg --files` for search.
 - Inspect focused files before editing.
 - Prefer existing Kotlin, Compose, MVVM, Ktor, and Material 3 patterns.
-- Keep app source changes under `app/src/main/java/com/yogi/chucknorris` unless build/config/test work requires another location.
+- Keep app source changes under `app/src/main/java/com/yogi/quotebattleroyal` unless build/config/test work requires another location.
 - Keep UI in composables, state in `QuoteViewModel`, data operations in `QuoteRepository`, and HTTP calls in `ApiService`.
 - Keep changes scoped to the requested behavior and avoid unrelated refactors.
 - Do not revert unrelated user changes.
@@ -70,7 +70,7 @@ Use focused validation first:
 - `./gradlew connectedAndroidTest` only when an emulator/device is available and instrumentation behavior matters.
 - `./gradlew assembleRelease` only when release packaging or CI parity matters.
 
-The Gradle config currently targets Java/JVM 24. Verify the local JDK before treating build failures as code failures.
+The Gradle config currently targets Java/JVM 21. Verify the local JDK before treating build failures as code failures.
 
 ## Memory Maintenance
 
