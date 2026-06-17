@@ -1,11 +1,20 @@
 # Release Readiness
 
 Status: draft operations checklist
-Last updated: 2026-05-16
+Last updated: 2026-06-17
 
 Use this document to coordinate Google Play, App Store, and tester-readiness
 work without storing credentials, signing keys, private account identifiers, or
 submission-only artifacts in Git.
+
+## Current Store Status
+
+- Aptoide release work is canceled as of 2026-06-17 because verifying ownership
+  requires a paid subscription. Do not prepare Aptoide-specific release assets,
+  ownership-verification material, or submission follow-up unless that store
+  path is explicitly reopened.
+- GitHub/itch.io release maintenance remains separate from the canceled Aptoide
+  path.
 
 ## Guardrails
 
