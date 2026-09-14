@@ -87,3 +87,23 @@ Use:
 Keep `/Users/yogi/Coding/docs/projects/chuck-norris/agent-memory.md` under 150 lines. Do not store raw logs, secrets, transient debugging notes, or speculative plans.
 
 If a future assistant wants a broad context snapshot, prefer creating a temporary local artifact outside durable docs, then delete it when done. Durable repo memory should stay compact and source-linked.
+
+## Workspace Agent Bootstrap
+
+This project participates in the Coding workspace orchestration policy.
+Read `/Users/yogi/Coding/AGENTS.md` to resolve the accepted local `develop`
+version of `codex-workspace-orchestration/AGENTS.md` and its compact workspace
+memory, then apply this file and task-relevant project memory and skills.
+Do not treat the branch occupying the named orchestration directory as accepted
+policy without verifying its Git identity and selected authority.
+
+Preserve the assigned role: the main assistant coordinates and delegates;
+a named developer mutates only its explicitly assigned authorized surface;
+a reviewer stays read-only. Opening workspace instructions does not change a
+worker's role. The handoff must supply the checkout, baseline, file scope,
+relevant context paths, delivery authority, validation, and stop conditions.
+
+For a linked or relocated checkout, use `git rev-parse --git-common-dir` to
+identify the primary repository and workspace. If the workspace adapter or
+required context is unavailable, report that gap to the parent/user before
+dependent changes. Never guess missing policy or broaden your own authority.
