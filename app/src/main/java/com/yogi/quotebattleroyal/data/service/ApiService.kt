@@ -1,12 +1,22 @@
 package com.yogi.quotebattleroyal.data.service
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import com.google.gson.Strictness
+import io.ktor.client.HttpClient
+import io.ktor.client.request.accept
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withTimeoutOrNull
 
 class ApiService(
     private val client: HttpClient,
@@ -15,198 +25,147 @@ class ApiService(
     private val dogRateLimiter: StreamRateLimiter = StreamRateLimiter(),
     private val yogiRateLimiter: StreamRateLimiter = StreamRateLimiter(),
     private val dogProviderTimeoutMs: Long = 4_500,
-    private val yogiProviderTimeoutMs: Long = 4_500
+    private val yogiProviderTimeoutMs: Long = 4_500,
+    private val quoteProviderTimeoutMs: Long = 8_000
 ) : FactService {
     private var nextCatProvider = CatFactProvider.CATFACT_NINJA
     private var nextYogiProvider = YogiProvider.ADVICE_SLIP
     private var nextEmergencyDogFactIndex = 0
 
     override suspend fun getRandomJoke(): String {
-        return try {
-            chuckRateLimiter.checkRequestAllowed("Chuck Norris")
-            val response = client.get("https://api.chucknorris.io/jokes/random")
-            if (response.status == HttpStatusCode.OK) {
-                val joke: JokeResponse = response.body()
-                joke.value.ifBlank {
-                    throw FactServiceException("Chuck Norris API returned an empty quote.")
-                }
-            } else {
-                throw FactServiceException("Chuck Norris API failed with status ${response.status.value}.")
-            }
-        } catch (e: FactServiceException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            throw FactServiceException("Chuck Norris API request failed.", e)
-        }
+        chuckRateLimiter.checkRequestAllowed("Chuck Norris")
+        val response = readProviderObject("Chuck Norris", "https://api.chucknorris.io/jokes/random", quoteProviderTimeoutMs)
+        return checkedRemoteText(response["value"].stringValue(), "Chuck Norris")
     }
 
     override suspend fun getRandomCatFact(): String {
-        return try {
-            catRateLimiter.checkRequestAllowed("Cat fact")
-            when (nextCatFactProvider()) {
-                CatFactProvider.CATFACT_NINJA -> getCatFactNinjaFact()
-                CatFactProvider.MEOWFACTS -> getMeowFactsFact()
+        catRateLimiter.checkRequestAllowed("Cat fact")
+        return when (nextCatFactProvider()) {
+            CatFactProvider.CATFACT_NINJA -> {
+                val response = readProviderObject("Cat Fact Ninja", "https://catfact.ninja/fact", quoteProviderTimeoutMs)
+                checkedRemoteText(response["fact"].stringValue(), "Cat Fact Ninja")
             }
-        } catch (e: FactServiceException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            throw FactServiceException("Cat Fact API request failed.", e)
+            CatFactProvider.MEOWFACTS -> {
+                val response = readProviderObject("MeowFacts", "https://meowfacts.herokuapp.com/", quoteProviderTimeoutMs)
+                val facts = response["data"] as? JsonArray
+                val text = facts?.firstNotNullOfOrNull { element ->
+                    element.stringValue()?.takeIf { it.isNotBlank() }
+                }
+                checkedRemoteText(text, "MeowFacts")
+            }
         }
     }
 
     override suspend fun getRandomDogFact(): String {
         dogRateLimiter.checkRequestAllowed("Dog fact")
-        var lastError: Throwable? = null
-        DogFactProvider.entries.forEach { provider ->
+        for (provider in DogFactProvider.entries) {
             try {
-                return withTimeout(dogProviderTimeoutMs) {
-                    when (provider) {
-                        DogFactProvider.DOG_API_V2 -> getDogApiV2Fact()
-                        DogFactProvider.KINDUFF_CLASSIC -> getKinduffDogFact()
-                        DogFactProvider.EMERGENCY_LOCAL -> getEmergencyDogFact()
-                    }
+                return when (provider) {
+                    DogFactProvider.DOG_API_V2 -> getDogApiV2Fact()
+                    DogFactProvider.KINDUFF_CLASSIC -> getKinduffDogFact()
                 }
-            } catch (e: TimeoutCancellationException) {
-                lastError = e
-            } catch (e: FactServiceException) {
-                lastError = e
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                lastError = e
+            } catch (_: FactServiceException) {
+                // Try the next provider for transport, timeout, or data validation failures.
             }
         }
-
-        throw FactServiceException("Dog fact providers are unavailable right now.", lastError)
+        currentCoroutineContext().ensureActive()
+        return getEmergencyDogFact()
     }
 
     override suspend fun getRandomYogiQuote(): String {
         yogiRateLimiter.checkRequestAllowed("Ask Yogi")
-        val providers = rotatedYogiProviders()
-        var lastError: Throwable? = null
-
-        providers.forEach { provider ->
+        for (provider in rotatedYogiProviders()) {
             try {
-                return withTimeout(yogiProviderTimeoutMs) {
-                    when (provider) {
-                        YogiProvider.ADVICE_SLIP -> getAdviceSlip()
-                        YogiProvider.ICANHAZ_DAD_JOKE -> getIcanhazDadJoke()
-                    }
+                return when (provider) {
+                    YogiProvider.ADVICE_SLIP -> getAdviceSlip()
+                    YogiProvider.ICANHAZ_DAD_JOKE -> getIcanhazDadJoke()
                 }
-            } catch (e: TimeoutCancellationException) {
-                lastError = e
-            } catch (e: FactServiceException) {
-                lastError = e
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                lastError = e
+            } catch (_: FactServiceException) {
+                // Keep the fallback available when a provider fails or rejects a response.
             }
         }
-
+        currentCoroutineContext().ensureActive()
         return YOGI_API_FALLBACK
     }
 
     private suspend fun getDogApiV2Fact(): String {
-        return try {
-            val response = client.get("https://dogapi.dog/api/v2/facts?limit=1")
-            if (response.status == HttpStatusCode.OK) {
-                val dogFact: DogApiResponse = response.body()
-                dogFact.data
-                    .firstOrNull()
-                    ?.attributes
-                    ?.body
-                    ?.takeIf { it.isNotBlank() }
-                    ?: throw FactServiceException("Dog API returned an empty fact.")
-            } else {
-                throw FactServiceException("Dog API failed with status ${response.status.value}.")
-            }
-        } catch (e: FactServiceException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            throw FactServiceException("Dog API request failed.", e)
-        }
+        val response = readProviderObject("Dog API", "https://dogapi.dog/api/v2/facts?limit=1", dogProviderTimeoutMs)
+        val resource = (response["data"] as? JsonArray)?.firstOrNull() as? JsonObject
+        val attributes = resource?.get("attributes") as? JsonObject
+        return checkedRemoteText(attributes?.get("body").stringValue(), "Dog API")
     }
 
     private suspend fun getKinduffDogFact(): String {
-        return try {
-            val response = client.get("https://dog-api.kinduff.com/api/facts")
-            if (response.status == HttpStatusCode.OK) {
-                val dogFact: KinduffDogFactResponse = response.body()
-                if (!dogFact.success) {
-                    throw FactServiceException("Kinduff Dog Facts returned an unsuccessful response.")
+        val response = readProviderObject("Kinduff Dog Facts", "https://dog-api.kinduff.com/api/facts", dogProviderTimeoutMs)
+        val success = response["success"] as? JsonPrimitive
+        if (success?.isBoolean != true || !success.asBoolean) {
+            throw FactServiceException("Kinduff Dog Facts returned an unsuccessful response.")
+        }
+        val facts = response["facts"] as? JsonArray
+        return checkedRemoteText(facts?.firstOrNull().stringValue(), "Kinduff Dog Facts")
+    }
+
+    private suspend fun getAdviceSlip(): String {
+        val response = readProviderObject("Advice Slip", "https://api.adviceslip.com/advice", yogiProviderTimeoutMs)
+        val slip = response["slip"] as? JsonObject
+        return cleanYogiText(slip?.get("advice").stringValue(), "Advice Slip")
+    }
+
+    private suspend fun getIcanhazDadJoke(): String {
+        val response = readProviderObject("I Can Haz Dad Joke", "https://icanhazdadjoke.com/", yogiProviderTimeoutMs)
+        return cleanYogiText(response["joke"].stringValue(), "I Can Haz Dad Joke")
+    }
+
+    private suspend fun readProviderObject(provider: String, url: String, timeoutMs: Long): JsonObject {
+        try {
+            // withTimeoutOrNull handles only this deadline, so caller cancellation propagates.
+            return withTimeoutOrNull(timeoutMs) {
+                client.prepareGet(url) { accept(ContentType.Application.Json) }.execute { response ->
+                    if (response.status != HttpStatusCode.OK) {
+                        throw FactServiceException("$provider failed with status ${response.status.value}.")
+                    }
+
+                    // Read one byte past the limit to distinguish a full valid body from truncation.
+                    // This also bounds responses with absent or misleading Content-Length headers.
+                    val channel = response.bodyAsChannel()
+                    val bytes = ByteArray(MAX_RESPONSE_BYTES + 1)
+                    var size = 0
+                    while (size < bytes.size) {
+                        val count = channel.readAvailable(bytes, size, bytes.size - size)
+                        if (count < 0) {
+                            channel.closedCause?.let { throw it }
+                            break
+                        }
+                        size += count
+                    }
+                    if (size > MAX_RESPONSE_BYTES) {
+                        throw FactServiceException("$provider returned an oversized response.")
+                    }
+                    val text = bytes.decodeToString(endIndex = size, throwOnInvalidSequence = true)
+                    gson.fromJson(text, JsonObject::class.java)
+                        ?: throw FactServiceException("$provider returned an empty response.")
                 }
-                dogFact.facts
-                    .firstOrNull()
-                    ?.takeIf { it.isNotBlank() }
-                    ?: throw FactServiceException("Kinduff Dog Facts returned an empty fact.")
-            } else {
-                throw FactServiceException("Kinduff Dog Facts failed with status ${response.status.value}.")
-            }
+            } ?: throw FactServiceException("$provider request timed out.")
         } catch (e: FactServiceException) {
             throw e
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            throw FactServiceException("Kinduff Dog Facts request failed.", e)
+            throw FactServiceException("$provider request failed.", e)
         }
     }
 
-    private suspend fun getCatFactNinjaFact(): String {
-        val response = client.get("https://catfact.ninja/fact")
-        if (response.status == HttpStatusCode.OK) {
-            val catFact: CatFactResponse = response.body()
-            return catFact.fact.ifBlank {
-                throw FactServiceException("Cat Fact Ninja returned an empty fact.")
-            }
-        } else {
-            throw FactServiceException("Cat Fact Ninja failed with status ${response.status.value}.")
-        }
-    }
+    private fun JsonElement?.stringValue(): String? =
+        (this as? JsonPrimitive)?.takeIf { it.isString }?.asString
 
-    private suspend fun getMeowFactsFact(): String {
-        val response = client.get("https://meowfacts.herokuapp.com/")
-        if (response.status == HttpStatusCode.OK) {
-            val catFact: MeowFactsResponse = response.body()
-            return catFact.data.firstOrNull { it.isNotBlank() }
-                ?: throw FactServiceException("MeowFacts returned an empty fact.")
-        } else {
-            throw FactServiceException("MeowFacts failed with status ${response.status.value}.")
+    private fun checkedRemoteText(value: String?, provider: String): String {
+        if (value.isNullOrBlank()) {
+            throw FactServiceException("$provider returned no valid quote or fact.")
         }
-    }
-
-    private suspend fun getAdviceSlip(): String {
-        val response = client.get("https://api.adviceslip.com/advice")
-        if (response.status == HttpStatusCode.OK) {
-            val advice: AdviceSlipResponse = response.body()
-            return cleanYogiText(
-                advice.slip?.advice,
-                "Advice Slip returned an empty response."
-            )
-        } else {
-            throw FactServiceException("Advice Slip failed with status ${response.status.value}.")
+        if (value.length > MAX_REMOTE_TEXT_LENGTH) {
+            throw FactServiceException("$provider returned oversized quote or fact text.")
         }
-    }
-
-    private suspend fun getIcanhazDadJoke(): String {
-        val response = client.get("https://icanhazdadjoke.com/") {
-            header(HttpHeaders.Accept, ContentType.Application.Json.toString())
-        }
-        if (response.status == HttpStatusCode.OK) {
-            val joke: IcanhazDadJokeResponse = response.body()
-            return cleanYogiText(
-                joke.joke,
-                "I Can Haz Dad Joke returned an empty joke."
-            )
-        } else {
-            throw FactServiceException("I Can Haz Dad Joke failed with status ${response.status.value}.")
-        }
+        return value
     }
 
     @Synchronized
@@ -227,15 +186,8 @@ class ApiService(
         return providers.drop(start.ordinal) + providers.take(start.ordinal)
     }
 
-    private fun cleanYogiText(value: String?, emptyMessage: String): String {
-        val normalized = value
-            ?.trim()
-            ?.replace(whitespace, " ")
-            ?: throw FactServiceException(emptyMessage)
-
-        if (normalized.isBlank()) {
-            throw FactServiceException(emptyMessage)
-        }
+    private fun cleanYogiText(value: String?, provider: String): String {
+        val normalized = checkedRemoteText(value, provider).trim().replace(whitespace, " ")
         if (normalized.length > MAX_YOGI_TEXT_LENGTH) {
             throw FactServiceException("Ask Yogi returned an oversized response.")
         }
@@ -261,8 +213,7 @@ class ApiService(
 
     private enum class DogFactProvider {
         DOG_API_V2,
-        KINDUFF_CLASSIC,
-        EMERGENCY_LOCAL
+        KINDUFF_CLASSIC
     }
 
     @Synchronized
@@ -273,7 +224,10 @@ class ApiService(
     }
 
     private companion object {
+        private const val MAX_RESPONSE_BYTES = 32 * 1024
+        private const val MAX_REMOTE_TEXT_LENGTH = 2_000
         private const val MAX_YOGI_TEXT_LENGTH = 280
+        private val gson = GsonBuilder().setStrictness(Strictness.STRICT).create()
         private const val YOGI_API_FALLBACK = "Even monkeys need a break sometimes. (API Error)"
         val whitespace = Regex("\\s+")
         val unsafeYogiFragments = listOf(
@@ -294,50 +248,3 @@ class ApiService(
 }
 
 class FactServiceException(message: String, cause: Throwable? = null) : Exception(message, cause)
-
-data class JokeResponse(
-    val value: String,
-    val icon_url: String? = null,
-    val id: String? = null,
-    val url: String? = null
-)
-
-data class CatFactResponse(
-    val fact: String,
-    val length: Int? = null
-)
-
-data class MeowFactsResponse(
-    val data: List<String> = emptyList()
-)
-
-data class DogApiResponse(
-    val data: List<DogFactResource> = emptyList()
-)
-
-data class DogFactResource(
-    val attributes: DogFactAttributes? = null
-)
-
-data class DogFactAttributes(
-    val body: String? = null
-)
-
-data class KinduffDogFactResponse(
-    val facts: List<String> = emptyList(),
-    val success: Boolean = false
-)
-
-data class AdviceSlipResponse(
-    val slip: AdviceSlip? = null
-)
-
-data class AdviceSlip(
-    val advice: String? = null
-)
-
-data class IcanhazDadJokeResponse(
-    val id: String? = null,
-    val joke: String? = null,
-    val status: Int? = null
-)

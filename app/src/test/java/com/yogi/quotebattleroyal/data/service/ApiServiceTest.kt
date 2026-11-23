@@ -3,18 +3,22 @@ package com.yogi.quotebattleroyal.data.service
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.ktor.serialization.gson.gson
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ApiServiceTest {
@@ -45,6 +49,65 @@ class ApiServiceTest {
 
         assertThrows(CancellationException::class.java) {
             runBlocking { service.getRandomJoke() }
+        }
+    }
+
+    @Test
+    fun getRandomJoke_acceptsExactlyTheByteLimit() = runBlocking {
+        val body = """{"value":"Short quote"}""".padEnd(32 * 1024)
+        testClient(body).use { client ->
+            assertEquals("Short quote", ApiService(client).getRandomJoke())
+        }
+    }
+
+    @Test
+    fun getRandomJoke_rejectsUndeclaredOrUnderstatedSizeBeforeEndOfStream() = runBlocking {
+        for (reportedSize in listOf(null, "1")) {
+            val channel = ByteChannel(autoFlush = true)
+            val sender = launch { channel.writeFully(ByteArray(32 * 1024 + 1) { ' '.code.toByte() }) }
+            val client = HttpClient(MockEngine) {
+                engine {
+                    addHandler {
+                        val headers = reportedSize?.let { headersOf(HttpHeaders.ContentLength, it) }
+                            ?: headersOf()
+                        respond(channel, headers = headers)
+                    }
+                }
+            }
+            try {
+                // The response stream remains open even after the writer has sent the limit.
+                val error = runCatching {
+                    withTimeout(2_000) { ApiService(client).getRandomJoke() }
+                }.exceptionOrNull()
+                assertTrue("Expected a size error, got $error", error is FactServiceException)
+                assertEquals("Chuck Norris returned an oversized response.", error?.message)
+            } finally {
+                sender.cancel()
+                client.close()
+            }
+        }
+    }
+
+    @Test
+    fun getRandomJoke_timesOutWhileReadingAStalledBody() = runBlocking {
+        val channel = ByteChannel(autoFlush = true)
+        HttpClient(MockEngine) { engine { addHandler { respond(channel) } } }.use { client ->
+            val error = runCatching {
+                withTimeout(2_000) { ApiService(client, quoteProviderTimeoutMs = 250).getRandomJoke() }
+            }.exceptionOrNull()
+            assertTrue("Expected a provider timeout, got $error", error is FactServiceException)
+            assertEquals("Chuck Norris request timed out.", error?.message)
+        }
+    }
+
+    @Test
+    fun getRandomJoke_rejectsNonStringValuesAndOverlongText() {
+        for (body in listOf("""{"value":45}""", """{"value":"${"q".repeat(2_001)}"}""")) {
+            testClient(body).use { client ->
+                assertThrows(FactServiceException::class.java) {
+                    runBlocking { ApiService(client).getRandomJoke() }
+                }
+            }
         }
     }
 
@@ -99,6 +162,22 @@ class ApiServiceTest {
 
         assertThrows(CancellationException::class.java) {
             runBlocking { service.getRandomCatFact() }
+        }
+    }
+
+    @Test
+    fun getRandomCatFact_enforcesTextLimitsForBothProviders() {
+        val longFact = "c".repeat(2_001)
+        testClient { url ->
+            if (url == "https://catfact.ninja/fact") """{"fact":"$longFact"}"""
+            else """{"data":["$longFact"]}"""
+        }.use { client ->
+            val service = ApiService(client)
+            repeat(2) {
+                assertThrows(FactServiceException::class.java) {
+                    runBlocking { service.getRandomCatFact() }
+                }
+            }
         }
     }
 
@@ -169,17 +248,14 @@ class ApiServiceTest {
                 bodyForUrl = { requestUrl ->
                     requestedUrls += requestUrl
                     when (requestUrl) {
-                        "https://dogapi.dog/api/v2/facts?limit=1" ->
-                            withTimeout(1) {
-                                delay(50)
-                                "This response should time out."
-                            }
+                        "https://dogapi.dog/api/v2/facts?limit=1" -> awaitCancellation()
                         "https://dog-api.kinduff.com/api/facts" ->
                             """{"facts":["Fallback dogs arrived before the spinner got comfy."],"success":true}"""
                         else -> "{}"
                     }
                 }
-            )
+            ),
+            dogProviderTimeoutMs = 250
         )
 
         val fact = service.getRandomDogFact()
@@ -210,6 +286,23 @@ class ApiServiceTest {
         assertThrows(CancellationException::class.java) {
             runBlocking { service.getRandomDogFact() }
         }
+    }
+
+    @Test
+    fun getRandomDogFact_rejectsOverlongTextFromBothRemoteProviders() = runBlocking {
+        val longFact = "d".repeat(2_001)
+        val requestedUrls = mutableListOf<String>()
+        testClient { url ->
+            requestedUrls += url
+            if (url.startsWith("https://dogapi.dog/")) {
+                """{"data":[{"attributes":{"body":"$longFact"}}]}"""
+            } else {
+                """{"facts":["$longFact"],"success":true}"""
+            }
+        }.use { client ->
+            assertEquals("Dogs have a sense of smell far stronger than humans.", ApiService(client).getRandomDogFact())
+        }
+        assertEquals(2, requestedUrls.size)
     }
 
     @Test
@@ -353,6 +446,38 @@ class ApiServiceTest {
         }
     }
 
+    @Test
+    fun getRandomYogiQuote_rejectsOverlongTextFromBothProviders() = runBlocking {
+        val longQuote = "y".repeat(281)
+        val requestedUrls = mutableListOf<String>()
+        testClient { url ->
+            requestedUrls += url
+            if (url.startsWith("https://api.adviceslip.com/")) """{"slip":{"advice":"$longQuote"}}"""
+            else """{"joke":"$longQuote"}"""
+        }.use { client ->
+            assertEquals("Even monkeys need a break sometimes. (API Error)", ApiService(client).getRandomYogiQuote())
+        }
+        assertEquals(2, requestedUrls.size)
+    }
+
+    @Test
+    fun callerTimeoutStopsRemoteFallbackAttempts() {
+        val requestedUrls = mutableListOf<String>()
+        testClient(statusForUrl = { HttpStatusCode.OK }, bodyForUrl = { url ->
+            requestedUrls += url
+            awaitCancellation()
+        }).use { client ->
+            val service = ApiService(client)
+            assertThrows(TimeoutCancellationException::class.java) {
+                runBlocking { withTimeout(250) { service.getRandomDogFact() } }
+            }
+            assertThrows(TimeoutCancellationException::class.java) {
+                runBlocking { withTimeout(250) { service.getRandomYogiQuote() } }
+            }
+        }
+        assertEquals(listOf("https://dogapi.dog/api/v2/facts?limit=1", "https://api.adviceslip.com/advice"), requestedUrls)
+    }
+
     private fun testClient(
         body: String = "{}",
         status: HttpStatusCode = HttpStatusCode.OK
@@ -395,9 +520,6 @@ class ApiServiceTest {
                     )
                 }
             }
-            install(ContentNegotiation) {
-                gson()
-            }
         }
     }
 
@@ -407,9 +529,6 @@ class ApiServiceTest {
                 addHandler {
                     throw CancellationException("request cancelled")
                 }
-            }
-            install(ContentNegotiation) {
-                gson()
             }
         }
     }

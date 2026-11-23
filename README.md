@@ -54,6 +54,16 @@ The generated APK is written to:
 app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
+Gradle verifies the wrapper distribution and the components listed in
+`gradle/verification-metadata.xml`. For a dependency change, regenerate the
+checksums with `./gradlew --write-verification-metadata sha256 test assembleDebug
+assembleRelease`, review additions against the publishing repositories and
+retain the AAPT2 entries for all build platforms. Run the build in strict mode
+before accepting the update.
+
+[Release APK signing](docs/release-readiness.md#separate-apk-signing-operation)
+is an explicitly approved step on a signing host.
+
 ## Features
 
 - Fetches random Chuck Norris quotes from `api.chucknorris.io`.

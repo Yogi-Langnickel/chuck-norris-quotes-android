@@ -50,6 +50,29 @@ submission-only artifacts in Git.
 - [ ] Capture final store-console decisions outside Git if they include private
   account data.
 
+### Separate APK signing operation
+
+Gradle and CI build an unsigned release APK without release credentials. After
+separate release approval, transfer the reviewed APK to an authorized signing
+host with Python 3 and trusted Android SDK Build Tools 36.0.0. Obtain the approved
+APK SHA-256 from the independently verified build receipt and the SHA-256 of the
+expected signing certificate from the protected release records.
+
+```sh
+python3 scripts/sign-release-apk.py \
+  --apk "$UNSIGNED_APK" --apk-sha256 "$APPROVED_APK_SHA256" \
+  --signer-sha256 "$APPROVED_SIGNER_SHA256" \
+  --build-tools "$ANDROID_HOME/build-tools/36.0.0" \
+  --keystore "$RELEASE_KEYSTORE" --alias "$RELEASE_KEY_ALIAS" \
+  --out "$SIGNED_APK"
+```
+
+Keep the keystore outside the checkout and enter passwords at the Android
+signing prompts. The command checks the selected bytes, the application ID, and
+the APK's release status. It verifies the signature and certificate before
+creating the output at a new path. Save the signed digest with the private
+release receipt. Publishing or signing a Play App Bundle has a separate scope.
+
 ## App Store Checklist
 
 - [x] Decide whether the first iOS delivery is a native SwiftUI app or a shared

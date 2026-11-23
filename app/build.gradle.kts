@@ -1,27 +1,8 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
-
-val releaseSigningPropertiesFile = providers
-    .environmentVariable("QUOTE_BATTLE_SIGNING_PROPERTIES")
-    .map { file(it) }
-    .orElse(file("/Users/yogi/Coding/projects/protected/quote-battle/quote-battle-release.properties"))
-    .get()
-
-val releaseSigningProperties = Properties()
-val hasReleaseSigningProperties = releaseSigningPropertiesFile.isFile
-
-if (hasReleaseSigningProperties) {
-    releaseSigningPropertiesFile.inputStream().use(releaseSigningProperties::load)
-}
-
-fun releaseSigningProperty(name: String): String =
-    releaseSigningProperties.getProperty(name)
-        ?: throw GradleException("Missing release signing property: $name")
 
 android {
     namespace = "com.yogi.quotebattleroyal"
@@ -57,25 +38,6 @@ android {
     buildFeatures {
         compose = true
     }
-
-    signingConfigs {
-        create("release") {
-            if (hasReleaseSigningProperties) {
-                storeFile = file(releaseSigningProperty("storeFile"))
-                storePassword = releaseSigningProperty("storePassword")
-                keyAlias = releaseSigningProperty("keyAlias")
-                keyPassword = releaseSigningProperty("keyPassword")
-            }
-        }
-    }
-
-    buildTypes {
-        getByName("release") {
-            if (hasReleaseSigningProperties) {
-                signingConfig = signingConfigs.getByName("release")
-            }
-        }
-    }
 }
 
 ksp {
@@ -105,8 +67,7 @@ dependencies {
     // Ktor 3.x
     val ktorVersion = "3.4.0"
     implementation("io.ktor:ktor-client-android:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-gson:$ktorVersion")
+    implementation("com.google.code.gson:gson:2.15.0")
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
 
     implementation("com.google.android.material:material:1.12.0")

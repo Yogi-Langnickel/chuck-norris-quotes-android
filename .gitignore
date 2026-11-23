@@ -25,6 +25,7 @@ mapping.txt
 *.keystore
 keystore.properties
 signing.properties
+quote-battle-release.properties
 *.p12
 *.pem
 service-account*.json

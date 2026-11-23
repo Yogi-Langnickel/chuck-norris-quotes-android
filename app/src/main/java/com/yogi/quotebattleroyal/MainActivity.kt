@@ -20,9 +20,7 @@ import com.yogi.quotebattleroyal.data.repository.QuoteRepository
 import com.yogi.quotebattleroyal.data.service.ApiService
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.serialization.gson.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,9 +32,6 @@ class MainActivity : ComponentActivity() {
                 connectTimeoutMillis = 5_000
                 socketTimeoutMillis = 8_000
                 requestTimeoutMillis = 8_000
-            }
-            install(ContentNegotiation) {
-                gson()
             }
         }
 
